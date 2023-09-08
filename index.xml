@@ -10,47 +10,103 @@
 <atom:link href="https://rossbowen.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description></description>
 <generator>quarto-1.3.450</generator>
-<lastBuildDate>Thu, 07 Sep 2023 23:00:00 GMT</lastBuildDate>
+<lastBuildDate>Tue, 05 Sep 2023 23:00:00 GMT</lastBuildDate>
 <item>
-  <title>Post With Code</title>
-  <dc:creator>Harlow Malloc</dc:creator>
-  <link>https://rossbowen.github.io/blog/post-with-code/index.html</link>
+  <title>Confidence intervals in the wild</title>
+  <dc:creator>RB </dc:creator>
+  <link>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</link>
   <description><![CDATA[ 
 
 
 
 
-<p>This is a post with executable code.</p>
+<p>Confidence intervals have always come up during interviews for analytical roles. I’m usually asked what a confidence interval is, and I’ll respond along the lines of the <a href="https://www.ons.gov.uk/methodology/methodologytopicsandstatisticalconcepts/uncertaintyandhowwemeasureit#confidence-interval">definition given by the Office for National Statistics</a>.</p>
+<blockquote class="blockquote">
+<p><strong>Using a 95% confidence interval</strong></p>
+<p>A 95% confidence level is frequently used. This means that if we drew 20 random samples and calculated a 95% confidence interval for each sample using the data in that sample, we would expect that, on average, 19 out of the 20 (95%) resulting confidence intervals would contain the true population value and 1 in 20 (5%) would not. If we increased the confidence level to 99%, wider intervals would be obtained.</p>
+</blockquote>
+<p>This definition aligns with that I was taught – if we took many samples and created many 95% confidence intervals, we’d expect 95% of those intervals to contain the true value for the parameter of interest. For many X% confidence intervals, we’d expect X% of the intervals to contain the true value.</p>
+<p>I’ve then been asked how I would help a non-technical audience interpret a specific confidence interval. The thing is, I’ve never felt that confidence intervals are a good thing to use with that kind of audience. Many <a href="https://statmodeling.stat.columbia.edu/2017/12/28/stupid-ass-statisticians-dont-know-goddam-confidence-interval/">statisticians misinterpret them</a>, so how we could expect a non-technical audience to use them correctly?</p>
+<p>I’ve gotten into some awkward debates over this – so here’s me getting my thoughts together.</p>
+<section id="what-does-a-confidence-interval-actually-tell-you" class="level2">
+<h2 class="anchored" data-anchor-id="what-does-a-confidence-interval-actually-tell-you">What does a confidence interval <em>actually</em> tell you?</h2>
+<p>I’d see a confidence interval in the wild and feel a bit unsure of how I could interpret it. If the definition of a confidence interval describes a behavior across <em>many</em> intervals, what does it mean when we’re presented with a <em>single</em> interval?</p>
+<p>A quick google and we see some common interpretations of confidence intervals:</p>
+<ul>
+<li>There’s a 95% chance that the parameter of interest lies within a 95% confidence interval.</li>
+<li>Confidence intervals are a range in which we think the true value is likely to lie.</li>
+</ul>
+<p>I couldn’t see how either of these followed from the definition we used earlier, about creating many intervals and on average X% of them containing the true value. I went searching and found many blog posts on the subject from <a href="https://statmodeling.stat.columbia.edu/">Andrew Gelman</a>, one of which introduced <a href="https://statmodeling.stat.columbia.edu/wp-content/uploads/2014/09/fundamentalError.pdf">this paper from Richard Morey et al.</a> which has shaped my thoughts over the years.</p>
+<hr>
+<p>Take this example from some of the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases/bulletins/coronaviruscovid19infectionsurveycharacteristicsofpeopletestingpositiveforcovid19uk/16november2022">ONS’s COVID-19 reporting</a>:</p>
+<blockquote class="blockquote">
+<p>The latest estimated rate of coronavirus (COVID-19) reinfections on 28 October 2022 was 42.8 per 100,000 participant days at risk (95% confidence interval: 42.0 to 43.6).</p>
+</blockquote>
+<p>Here we have a single 95% interval reported alongside an estimate of the COVID-19 reinfection rate. Maybe this is one of the lucky intervals which contains the true reinfection rate, but maybe it’s not. We don’t know.</p>
+<p>The idea behind the 95% confidence interval is to perform some procedure which, on average, returns intervals <img src="https://latex.codecogs.com/png.latex?(L,%20U)"> which contain the true parameter 95% of the time.</p>
+<p><img src="https://latex.codecogs.com/png.latex?P(L(X)%20%5Cleq%20%5Ctheta%20%5Cleq%20U(X))%20=%200.95"></p>
+<p>We write <img src="https://latex.codecogs.com/png.latex?L(X)"> and <img src="https://latex.codecogs.com/png.latex?U(X)"> to emphasise these are random variables which in practice will often depend on the data. The problem occurs when we try to replace <img src="https://latex.codecogs.com/png.latex?(L(X),%20U(X))"> with an actual interval we’ve obtained.</p>
+<p>If <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> was the true COVID-19 reinfection rate, <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> is just some fixed number we don’t know the value of. We can’t say anything probabilistic about the value of <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> (unless we start using Bayesian techniques).</p>
+<p>But, if we replace <img src="https://latex.codecogs.com/png.latex?L(X)"> and <img src="https://latex.codecogs.com/png.latex?U(X)"> above with the obtained interval, the probability changes.</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%20%20P(42.0%20%5Cleq%20%5Ctheta%20%5Cleq%2043.6)%20=%20%5Cbegin%7Bcases%7D%0A%20%20%20%201,%20&amp;%20%5Ctext%7Bif%20%7D%2042.0%20%5Cleq%20%5Ctheta%20%5Cleq%2043.6,%20%5C%5C%0A%20%20%20%200,%20&amp;%20%5Ctext%7Botherwise%7D.%0A%20%20%5Cend%7Bcases%7D%0A"></p>
+<p>Andrew Gelman provides an analogy in <a href="https://statmodeling.stat.columbia.edu/2016/11/23/abraham-lincoln-confidence-intervals/">a blog post</a> to explain the change in probability. To provide a similar analogy – let’s say 170cm is a fairly average male height – we could imagine that half of men are taller and half are shorter than 170cm. Bob is 168cm tall.</p>
+<p>It seems reasonable to say, if <img src="https://latex.codecogs.com/png.latex?X"> was the height of some arbitrary man, that the probability of that man being taller than 170cm is a half.</p>
+<p><img src="https://latex.codecogs.com/png.latex?P(X%20%3E%20170%5Ctext%7Bcm%7D)%20=%200.5."></p>
+<p>But we can’t just replace <img src="https://latex.codecogs.com/png.latex?X"> with Bob’s height and expect the probability to remain the same. If we condition the above probability to talk specifically about Bob, rather than some arbitrary man, then the probability becomes 0, as Bob is shorter than 170cm.</p>
+<p><img src="https://latex.codecogs.com/png.latex?P(X%20%3E%20170%5Ctext%7Bcm%7D%20%5Cmid%20X%20=%20%5Ctext%7BBob's%20height%7D)%20=%20P(168%5Ctext%7Bcm%7D%20%3E%20170%5Ctext%7Bcm%7D)%20=%200."></p>
+<p>Jerzy Neyman (<a href="https://royalsocietypublishing.org/doi/epdf/10.1098/rsta.1937.0005">who introduced confidence intervals in this 1937 paper</a>) was so clear about their interpretation:</p>
+<blockquote class="blockquote">
+<p>It will be noticed that in the above description the probability statements refer to the problems of estimation with which the statistician will be concerned in the future. In fact, I have repeatedly stated that the frequency of correct results will tend to <img src="https://latex.codecogs.com/png.latex?%5Calpha">. Consider now the case when a sample <img src="https://latex.codecogs.com/png.latex?E'">, is already drawn, and the calculations have given <img src="https://latex.codecogs.com/png.latex?%5Cunderset%7B%5Cbar%7B%7D%7D%7B%5Ctheta%7D(E')%20=%201"> and <img src="https://latex.codecogs.com/png.latex?%5Cbar%7B%5Ctheta%7D(E')%20=%202">. <strong>Can we say that in this particular case the probability of the true value falling between 1 and 2 is equal to</strong> <img src="https://latex.codecogs.com/png.latex?%5Calpha">?</p>
+<p><strong>The answer is obviously in the negative.</strong> The parameter <img src="https://latex.codecogs.com/png.latex?%5Ctheta_1"> is an unknown constant, and no probability statement concerning its value may be made, that is except for hypothetical and trivial ones</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Bequation%7D%20%5Ctag%7B21%7D%0A%20%20P(1%20%5Cleq%20%5Ctheta_1%20%5Cleq%202)%20=%20%5Cbegin%7Bcases%7D%0A%20%20%20%201,%20&amp;%20%5Ctext%7Bif%20%7D%201%20%5Cleq%20%5Ctheta_1%20%5Cleq%202,%20%5C%5C%0A%20%20%20%200,%20&amp;%20%5Ctext%7Bif%20either%20%7D%20%5Ctheta_1%20%5Cleq%202%20%5Ctext%7B%20or%20%7D%202%20%5Cgeq%20%5Ctheta_1.%0A%20%20%5Cend%7Bcases%7D%0A%5Cend%7Bequation%7D%0A"></p>
+</blockquote>
+<hr>
+<p>To sum up – we can’t say that <em>all</em> confidence intervals give a range of likely values for some parameter, at least not from the definition of a confidence interval alone. <em>Some</em> confidence intervals may be sensible to interpret as a Bayesian credible intervals, at which point we could make statements about likely values.</p>
+<p>Or as Morey et al.&nbsp;put it:</p>
+<blockquote class="blockquote">
+<p>In the case where data are normally distributed, for instance, there is a particular prior that will lead to a confidence interval that is numerically identical to Bayesian credible intervals computed using the Bayesian posterior (Jeffreys, 1961; Lindley, 1965). This might lead one to suspect that it does not matter whether one uses confidence procedures or Bayesian procedures. We showed, however, that confidence intervals and credible intervals can disagree markedly. The only way to know that a confidence interval is numerically identical to some credible interval is to prove it. The correspondence cannot – and should not – be assumed.</p>
+</blockquote>
+</section>
+<section id="closing-thoughts" class="level2">
+<h2 class="anchored" data-anchor-id="closing-thoughts">Closing thoughts</h2>
+<p>I think that confidence intervals have a use, particularly when the procedures to create them provide intervals which help describe the uncertainty in an estimate. But I’d be nervous to include them when writing for non-technical audiences, mainly due to the risk of misinterpretation:</p>
+<ul>
+<li>A specific 95% confidence interval doesn’t cover the true value with 95% probability, but many readers will see an interval and assume that.</li>
+<li>A confidence interval doesn’t give a range of likely values for some parameter, unless it is appropriate to interpret it as a Bayesian credible interval – which a non-technical audience wouldn’t be familiar with. A reader may assume all intervals provide likely values, regardless of the underlying statistical model being applied.</li>
+<li>The Morey et al.&nbsp;paper also covers how smaller confidence intervals don’t necessarily mean more precise estimates, which is another common misinterpretation (with some more discussion <a href="https://stats.stackexchange.com/questions/204530/what-do-confidence-intervals-say-about-precision-if-anything">here</a>). It’s true for <em>some</em> intervals.</li>
+<li>Also, readers may not appreciate the difference between precision and accuracy, and think an estimate is better and assign more trust to it just because it’s precise, even if it’s completely inaccurate.</li>
+</ul>
+<p>Other gotchas I think make confidence intervals difficult to interpret:</p>
+<ul>
+<li>What does it mean to be confident anyway? What is a confidence level? Do most people interpret being confident in a confidence interval as meaning the interval is likely to contain the true value?</li>
+<li>There’s some real mental gymnastics to remember that a 99% confidence interval is wider than a 95% confidence interval. A 99% interval is wider, so there’s more uncertainty, but we’re now 99% confident instead of 95% confident. 🤷 To me, being more confident would meaning being able to provide a narrower interval with less uncertainty.</li>
+<li>When two confidence intervals do not overlap, it means that the difference between the two parameters is statistically significant. But when two confidence intervals do overlap, they may or may not be significantly different. Overlapping intervals are often interpreted as meaning that the difference is not statistically significant, but this is not always the case.</li>
+</ul>
+<p>If I were to include confidence intervals in my writing then I’d expect the audience to have some level of technical knowledge, and I think it’s important to include what procedure has been used to compute the interval. If we think it is reasonable to interpret the interval as a Bayesian credible interval, then we can tell the audience that’s what we’re doing, and also include information about the prior we’ve used as part of our methodology.</p>
+</section>
+<section id="more-reading" class="level2">
+<h2 class="anchored" data-anchor-id="more-reading">More reading</h2>
+<p>Some posts from Andrew Gelman’s blog:</p>
+<ul>
+<li><a href="https://statmodeling.stat.columbia.edu/2014/03/15/problematic-interpretations-confidence-intervals/">Problematic interpretations of confidence intervals</a></li>
+<li><a href="https://statmodeling.stat.columbia.edu/2016/11/23/abraham-lincoln-confidence-intervals/">Abraham Lincoln and confidence intervals</a></li>
+<li><a href="https://statmodeling.stat.columbia.edu/2017/03/04/interpret-confidence-intervals/">How to interpret confidence intervals?</a></li>
+<li><a href="https://statmodeling.stat.columbia.edu/2022/04/05/confidence-intervals-compatability-intervals-uncertainty-intervals/">Confidence intervals, compatability intervals, uncertainty intervals</a></li>
+</ul>
+<p>Two papers from Richard Moray et al.</p>
+<ul>
+<li><a href="https://www.ejwagenmakers.com/inpress/HoekstraEtAlPBR.pdf">Robust misinterpretation of confidence intervals</a></li>
+<li><a href="https://statmodeling.stat.columbia.edu/wp-content/uploads/2014/09/fundamentalError.pdf">The fallacy of placing confidence in confidence intervals</a></li>
+</ul>
 
 
+</section>
 
  ]]></description>
-  <category>news</category>
-  <category>code</category>
+  <category>statistics</category>
   <category>analysis</category>
-  <guid>https://rossbowen.github.io/blog/post-with-code/index.html</guid>
-  <pubDate>Thu, 07 Sep 2023 23:00:00 GMT</pubDate>
-  <media:content url="https://rossbowen.github.io/blog/post-with-code/image.jpg" medium="image" type="image/jpeg"/>
-</item>
-<item>
-  <title>Welcome To My Blog</title>
-  <dc:creator>Tristan O&#39;Malley</dc:creator>
-  <link>https://rossbowen.github.io/blog/welcome/index.html</link>
-  <description><![CDATA[ 
-
-
-
-
-<p>This is the first post in a Quarto blog. Welcome!</p>
-<p><img src="https://rossbowen.github.io/blog/welcome/thumbnail.jpg" class="img-fluid"></p>
-<p>Since this post doesn’t specify an explicit <code>image</code>, the first image in the post will be used in the listing page of posts.</p>
-
-
-
- ]]></description>
-  <category>news</category>
-  <guid>https://rossbowen.github.io/blog/welcome/index.html</guid>
-  <pubDate>Mon, 04 Sep 2023 23:00:00 GMT</pubDate>
+  <guid>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</guid>
+  <pubDate>Tue, 05 Sep 2023 23:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>

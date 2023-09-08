@@ -175,7 +175,7 @@ ul.task-list li input[type="checkbox"] {
 <li>There’s a 95% chance that the parameter of interest lies within a 95% confidence interval.</li>
 <li>Confidence intervals are a range in which we think the true value is likely to lie.</li>
 </ul>
-<p>I couldn’t see how either of these followed from the definition we used earlier, about creating many intervals and on average X% of them containing the true value. I went searching and found many blogposts on the subject from <a href="https://statmodeling.stat.columbia.edu/">Andrew Gelman</a>, one of which introduced <a href="https://statmodeling.stat.columbia.edu/wp-content/uploads/2014/09/fundamentalError.pdf">this paper from Richard Morey et al.</a> which has shaped my thoughts over the years.</p>
+<p>I couldn’t see how either of these followed from the definition we used earlier, about creating many intervals and on average X% of them containing the true value. I went searching and found many blog posts on the subject from <a href="https://statmodeling.stat.columbia.edu/">Andrew Gelman</a>, one of which introduced <a href="https://statmodeling.stat.columbia.edu/wp-content/uploads/2014/09/fundamentalError.pdf">this paper from Richard Morey et al.</a> which has shaped my thoughts over the years.</p>
 <hr>
 <p>Take this example from some of the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases/bulletins/coronaviruscovid19infectionsurveycharacteristicsofpeopletestingpositiveforcovid19uk/16november2022">ONS’s COVID-19 reporting</a>:</p>
 <blockquote class="blockquote">
@@ -186,7 +186,7 @@ ul.task-list li input[type="checkbox"] {
 <p><span class="math display">\[P(L(X) \leq \theta \leq U(X)) = 0.95\]</span></p>
 <p>We write <span class="math inline">\(L(X)\)</span> and <span class="math inline">\(U(X)\)</span> to emphasise these are random variables which in practice will often depend on the data. The problem occurs when we try to replace <span class="math inline">\((L(X), U(X))\)</span> with an actual interval we’ve obtained.</p>
 <p>If <span class="math inline">\(\theta\)</span> was the true COVID-19 reinfection rate, <span class="math inline">\(\theta\)</span> is just some fixed number we don’t know the value of. We can’t say anything probabilistic about the value of <span class="math inline">\(\theta\)</span> (unless we start using Bayesian techniques).</p>
-<p>If we replace <span class="math inline">\(L(X)\)</span> and <span class="math inline">\(U(X)\)</span> above with the obtained interval, the probability changes.</p>
+<p>But, if we replace <span class="math inline">\(L(X)\)</span> and <span class="math inline">\(U(X)\)</span> above with the obtained interval, the probability changes.</p>
 <p><span class="math display">\[
   P(42.0 \leq \theta \leq 43.6) = \begin{cases}
     1, &amp; \text{if } 42.0 \leq \theta \leq 43.6, \\
@@ -198,9 +198,9 @@ ul.task-list li input[type="checkbox"] {
 <p><span class="math display">\[P(X &gt; 170\text{cm}) = 0.5.\]</span></p>
 <p>But we can’t just replace <span class="math inline">\(X\)</span> with Bob’s height and expect the probability to remain the same. If we condition the above probability to talk specifically about Bob, rather than some arbitrary man, then the probability becomes 0, as Bob is shorter than 170cm.</p>
 <p><span class="math display">\[P(X &gt; 170\text{cm} \mid X = \text{Bob's height}) = P(168\text{cm} &gt; 170\text{cm}) = 0.\]</span></p>
-<p>What’s amazing is that despite all the common misinterpretation, Jerzy Neyman, <a href="https://royalsocietypublishing.org/doi/epdf/10.1098/rsta.1937.0005">who introduced confidence intervals in this 1937 paper</a>, was so clear about how they shouldn’t be interpreted:</p>
+<p>Jerzy Neyman (<a href="https://royalsocietypublishing.org/doi/epdf/10.1098/rsta.1937.0005">who introduced confidence intervals in this 1937 paper</a>) was so clear about their interpretation:</p>
 <blockquote class="blockquote">
-<p>It will be noticed that in the above description the probability statements refer to the problems of estimation with which the statistician will be concerned in the future. In fact, I have repeatedly stated that the frequency of correct results will tend to <span class="math inline">\(\alpha\)</span>. Consider now the case when a sample <span class="math inline">\(E'\)</span>, is already drawn, and the calculations have given <span class="math inline">\(\underset{\bar{}}{\theta}(E') = 1\)</span> and <span class="math inline">\(\bar{\theta}(E') = 2\)</span>. <strong>Can we say that in this particular case the probability of the true value falling between 1 and 2 is equal to <span class="math inline">\(\alpha\)</span>?</strong></p>
+<p>It will be noticed that in the above description the probability statements refer to the problems of estimation with which the statistician will be concerned in the future. In fact, I have repeatedly stated that the frequency of correct results will tend to <span class="math inline">\(\alpha\)</span>. Consider now the case when a sample <span class="math inline">\(E'\)</span>, is already drawn, and the calculations have given <span class="math inline">\(\underset{\bar{}}{\theta}(E') = 1\)</span> and <span class="math inline">\(\bar{\theta}(E') = 2\)</span>. <strong>Can we say that in this particular case the probability of the true value falling between 1 and 2 is equal to</strong> <span class="math inline">\(\alpha\)</span>?</p>
 <p><strong>The answer is obviously in the negative.</strong> The parameter <span class="math inline">\(\theta_1\)</span> is an unknown constant, and no probability statement concerning its value may be made, that is except for hypothetical and trivial ones</p>
 <p><span class="math display">\[
 \begin{equation} \tag{21}
@@ -212,7 +212,7 @@ ul.task-list li input[type="checkbox"] {
 \]</span></p>
 </blockquote>
 <hr>
-<p>To sum up – we can’t say that <em>all</em> confidence intervals give a range of likely values for some parameter, at least not from the definition of a confidence interval alone. <em>Some</em> confidence intervals may be sensible to interpret as a Bayesian credible intervals, at which point we could make statements about likelihood – but then we’ve moved away from using a confidence interval as it was invented.</p>
+<p>To sum up – we can’t say that <em>all</em> confidence intervals give a range of likely values for some parameter, at least not from the definition of a confidence interval alone. <em>Some</em> confidence intervals may be sensible to interpret as a Bayesian credible intervals, at which point we could make statements about likely values.</p>
 <p>Or as Morey et al.&nbsp;put it:</p>
 <blockquote class="blockquote">
 <p>In the case where data are normally distributed, for instance, there is a particular prior that will lead to a confidence interval that is numerically identical to Bayesian credible intervals computed using the Bayesian posterior (Jeffreys, 1961; Lindley, 1965). This might lead one to suspect that it does not matter whether one uses confidence procedures or Bayesian procedures. We showed, however, that confidence intervals and credible intervals can disagree markedly. The only way to know that a confidence interval is numerically identical to some credible interval is to prove it. The correspondence cannot – and should not – be assumed.</p>
@@ -220,19 +220,20 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="closing-thoughts" class="level2">
 <h2 class="anchored" data-anchor-id="closing-thoughts">Closing thoughts</h2>
-<p>I think that confidence intervals have a use, particularly when the procedures to create them provide intervals which aid describing the uncertainty in an estimate. But I’d be nervous to include them when writing for non-technical audiences, mainly due to the risk of misinterpretation:</p>
+<p>I think that confidence intervals have a use, particularly when the procedures to create them provide intervals which help describe the uncertainty in an estimate. But I’d be nervous to include them when writing for non-technical audiences, mainly due to the risk of misinterpretation:</p>
 <ul>
 <li>A specific 95% confidence interval doesn’t cover the true value with 95% probability, but many readers will see an interval and assume that.</li>
 <li>A confidence interval doesn’t give a range of likely values for some parameter, unless it is appropriate to interpret it as a Bayesian credible interval – which a non-technical audience wouldn’t be familiar with. A reader may assume all intervals provide likely values, regardless of the underlying statistical model being applied.</li>
-<li>The Morey et al.&nbsp;paper also covers how smaller confidence intervals don’t necessarily mean more precise estimates, which is another common misinterpretation (with some more discussion <a href="https://stats.stackexchange.com/questions/204530/what-do-confidence-intervals-say-about-precision-if-anything">here</a>). It’s true for <em>some</em> intervals. Readers may not appreciate the difference between precision and accuracy, and think an estimate is better and assign more trust to it just because it’s precise, even if it’s completely inaccurate.</li>
+<li>The Morey et al.&nbsp;paper also covers how smaller confidence intervals don’t necessarily mean more precise estimates, which is another common misinterpretation (with some more discussion <a href="https://stats.stackexchange.com/questions/204530/what-do-confidence-intervals-say-about-precision-if-anything">here</a>). It’s true for <em>some</em> intervals.</li>
+<li>Also, readers may not appreciate the difference between precision and accuracy, and think an estimate is better and assign more trust to it just because it’s precise, even if it’s completely inaccurate.</li>
 </ul>
-<p>Other gotchas which make confidence intervals difficult to interpret:</p>
+<p>Other gotchas I think make confidence intervals difficult to interpret:</p>
 <ul>
 <li>What does it mean to be confident anyway? What is a confidence level? Do most people interpret being confident in a confidence interval as meaning the interval is likely to contain the true value?</li>
-<li>There’s some real mental gymnastics to remember that a 99% confidence interval is wider than a 95% confidence interval. A 99% interval is wider, so there’s more uncertainty, but we’re now 99% confident instead of 95% confident, which sounds like we’re more confident. 🤷 To me, being more confident would meaning being able to provide a narrower, more certain interval.</li>
-<li>When two confidence intervals do not overlap, it means that the difference between the two parameters is statistically significant. But when two confidence intervals do overlap, they may or may not be. Overlapping intervals are often interpreted as meaning that the difference is not statistically significant, but this is not always the case.</li>
+<li>There’s some real mental gymnastics to remember that a 99% confidence interval is wider than a 95% confidence interval. A 99% interval is wider, so there’s more uncertainty, but we’re now 99% confident instead of 95% confident. 🤷 To me, being more confident would meaning being able to provide a narrower interval with less uncertainty.</li>
+<li>When two confidence intervals do not overlap, it means that the difference between the two parameters is statistically significant. But when two confidence intervals do overlap, they may or may not be significantly different. Overlapping intervals are often interpreted as meaning that the difference is not statistically significant, but this is not always the case.</li>
 </ul>
-<p>If I were to include confidence intervals in my writing then I’d expect the audience to have some level of technical knowledge, and I think it’s important to include what procedure has been used to compute the interval. If we think it is reasonable to interpret the interval as a Bayesian credible interval, then we can tell the audience that’s what we’re doing, but also include information about the prior we’ve used as part of our methodology.</p>
+<p>If I were to include confidence intervals in my writing then I’d expect the audience to have some level of technical knowledge, and I think it’s important to include what procedure has been used to compute the interval. If we think it is reasonable to interpret the interval as a Bayesian credible interval, then we can tell the audience that’s what we’re doing, and also include information about the prior we’ve used as part of our methodology.</p>
 </section>
 <section id="more-reading" class="level2">
 <h2 class="anchored" data-anchor-id="more-reading">More reading</h2>

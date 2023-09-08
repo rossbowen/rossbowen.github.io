@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://rossbowen.github.io/about.html</loc>
-    <lastmod>2023-09-08T20:02:51.066Z</lastmod>
-  </url>
-  <url>
-    <loc>https://rossbowen.github.io/blog/post-with-code/index.html</loc>
-    <lastmod>2023-09-08T20:02:50.438Z</lastmod>
+    <loc>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</loc>
+    <lastmod>2023-09-08T20:37:00.324Z</lastmod>
   </url>
   <url>
     <loc>https://rossbowen.github.io/index.html</loc>
-    <lastmod>2023-09-08T20:02:50.121Z</lastmod>
-  </url>
-  <url>
-    <loc>https://rossbowen.github.io/blog/welcome/index.html</loc>
-    <lastmod>2023-09-08T20:02:50.752Z</lastmod>
+    <lastmod>2023-09-08T20:36:59.759Z</lastmod>
   </url>
 </urlset>
