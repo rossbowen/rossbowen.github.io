@@ -1,14 +1,110 @@
 ---
-title: "."
 listing:
-  contents: posts
+  contents: blog
   sort: "date desc"
-  type: default
-  categories: true
+  type: table
+  fields: [date, title, description]
+  categories: false
   sort-ui: false
   filter-ui: false
-page-layout: full
-title-block-banner: true
+  feed: true
+page-layout: article
 ---
 
+```{ojs}
+//| echo: false
+//| style: "text-align: center;"
 
+{
+  // Adapted from https://observablehq.com/@ealexander/random-walk
+
+  // Constants controlling simulation
+  const radius = 10;
+  const frameX = window.innerWidth < 768 ? 300 : 799;
+  const frameY = window.innerWidth < 768 ? 300 : 400;
+  const startX = frameX / 2;
+  const startY = frameY / 2;
+  const stepSize = 2 * radius;
+  const stepDur = 200;
+  const trailColors = ["lightblue", "lightgreen", "pink", "coral", "purple"];
+  const trailOpacity = 0.5;
+
+  // Create the SVG container for sim
+  const svg_actual = DOM.svg(frameX, frameY);
+  const svg = d3.select(svg_actual);
+
+  // Create an empty circle to indicate where walk began
+  const startingPoint = svg.append('circle')
+    .attr('cx', startX)
+    .attr('cy', startY)
+    .attr('r', radius)
+    // .style('fill', trailColors[Math.floor(Math.random() * trailColors.length)])
+    // .style('opacity', trailOpacity);
+    .style('stroke', 'black')
+    .style('fill', 'white');
+
+  // Here's our happy walking circle!
+  let walker = svg
+    .append("circle")
+    .attr("cx", startX)
+    .attr("cy", startY)
+    .attr("r", radius)
+    .style("fill", "black");
+
+  function sigmoid(x) {
+    return 1 / (1 + Math.exp(-x));
+  }
+
+  // Function to run a single "step" of the random walk
+  // (and kick off the *next* step)
+  function step() {
+    // Choose a direction
+    let axis = Math.random() < 0.5 ? "cx" : "cy";
+    let dir = Math.random() < 0.5 ? -1 * stepSize : stepSize;
+    // Check if next step will take point outside grid
+    if (
+      (axis === "cx" &&
+        (parseInt(walker.attr(axis)) + dir < radius ||
+          parseInt(walker.attr(axis)) + dir > frameX - radius)) ||
+      (axis === "cy" &&
+        (parseInt(walker.attr(axis)) + dir < radius ||
+          parseInt(walker.attr(axis)) + dir > frameY - radius))
+    ) {
+      // If so, change direction to opposite direction
+      dir = -1 * dir;
+    }
+
+    // Animate circle's movement in that direction
+    walker
+      .transition()
+      .attr(axis, parseInt(walker.attr(axis)) + dir)
+      .duration(stepDur)
+      .delay(stepDur)
+      .on("end", step); // Once animation is done, kick off another step!
+
+    // For each step, drop a new circle with low opacity
+    // to create a "trail" showing where we've been.
+    svg
+      .insert("circle", ":first-child") // walker should stay on top
+      .attr("cx", walker.attr("cx"))
+      .attr("cy", walker.attr("cy"))
+      .attr("r", radius)
+      .style(
+        "fill",
+        trailColors[Math.floor(Math.random() * trailColors.length)]
+      )
+      .style("opacity", trailOpacity);
+  }
+
+  // Kick off the animation!
+  step();
+
+  return svg_actual;
+}
+```
+
+::: {style="text-align: right; font-size: 0.8rem;"}
+*Adapted from Eric Alexander's [random walk](https://observablehq.com/@ealexander/random-walk).*
+:::
+
+## Blog posts
