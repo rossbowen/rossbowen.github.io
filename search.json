@@ -1,0 +1,37 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this blog"
+  },
+  {
+    "objectID": "blog/post-with-code/index.html",
+    "href": "blog/post-with-code/index.html",
+    "title": "Post With Code",
+    "section": "",
+    "text": "This is a post with executable code."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "RB's blog",
+    "section": "",
+    "text": "{\n  // Adapted from https://observablehq.com/@ealexander/random-walk\n\n  // Constants controlling simulation\n  const radius = 10;\n  const frameX = window.innerWidth &lt; 768 ? 300 : 799;\n  const frameY = window.innerWidth &lt; 768 ? 300 : 400;\n  const startX = frameX / 2;\n  const startY = frameY / 2;\n  const stepSize = 2 * radius;\n  const stepDur = 200;\n  const trailColors = [\"lightblue\", \"lightgreen\", \"pink\", \"coral\", \"purple\"];\n  const trailOpacity = 0.5;\n\n  // Create the SVG container for sim\n  const svg_actual = DOM.svg(frameX, frameY);\n  const svg = d3.select(svg_actual);\n\n  // Create an empty circle to indicate where walk began\n  const startingPoint = svg.append('circle')\n    .attr('cx', startX)\n    .attr('cy', startY)\n    .attr('r', radius)\n    // .style('fill', trailColors[Math.floor(Math.random() * trailColors.length)])\n    // .style('opacity', trailOpacity);\n    .style('stroke', 'black')\n    .style('fill', 'white');\n\n  // Here's our happy walking circle!\n  let walker = svg\n    .append(\"circle\")\n    .attr(\"cx\", startX)\n    .attr(\"cy\", startY)\n    .attr(\"r\", radius)\n    .style(\"fill\", \"black\");\n\n  function sigmoid(x) {\n    return 1 / (1 + Math.exp(-x));\n  }\n\n  // Function to run a single \"step\" of the random walk\n  // (and kick off the *next* step)\n  function step() {\n    // Choose a direction\n    let axis = Math.random() &lt; 0.5 ? \"cx\" : \"cy\";\n    let dir = Math.random() &lt; 0.5 ? -1 * stepSize : stepSize;\n    // Check if next step will take point outside grid\n    if (\n      (axis === \"cx\" &&\n        (parseInt(walker.attr(axis)) + dir &lt; radius ||\n          parseInt(walker.attr(axis)) + dir &gt; frameX - radius)) ||\n      (axis === \"cy\" &&\n        (parseInt(walker.attr(axis)) + dir &lt; radius ||\n          parseInt(walker.attr(axis)) + dir &gt; frameY - radius))\n    ) {\n      // If so, change direction to opposite direction\n      dir = -1 * dir;\n    }\n\n    // Animate circle's movement in that direction\n    walker\n      .transition()\n      .attr(axis, parseInt(walker.attr(axis)) + dir)\n      .duration(stepDur)\n      .delay(stepDur)\n      .on(\"end\", step); // Once animation is done, kick off another step!\n\n    // For each step, drop a new circle with low opacity\n    // to create a \"trail\" showing where we've been.\n    svg\n      .insert(\"circle\", \":first-child\") // walker should stay on top\n      .attr(\"cx\", walker.attr(\"cx\"))\n      .attr(\"cy\", walker.attr(\"cy\"))\n      .attr(\"r\", radius)\n      .style(\n        \"fill\",\n        trailColors[Math.floor(Math.random() * trailColors.length)]\n      )\n      .style(\"opacity\", trailOpacity);\n  }\n\n  // Kick off the animation!\n  step();\n\n  return svg_actual;\n}"
+  },
+  {
+    "objectID": "index.html#blog-posts",
+    "href": "index.html#blog-posts",
+    "title": "RB's blog",
+    "section": "Blog posts",
+    "text": "Blog posts"
+  },
+  {
+    "objectID": "blog/welcome/index.html",
+    "href": "blog/welcome/index.html",
+    "title": "Welcome To My Blog",
+    "section": "",
+    "text": "This is the first post in a Quarto blog. Welcome!\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+  }
+]
