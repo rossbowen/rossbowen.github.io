@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/blog/how-long-will-my-machine-last/index.html",
       "/blog/confidence-intervals-in-the-wild/index.html"
     ]
   }

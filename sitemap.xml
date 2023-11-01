@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</loc>
-    <lastmod>2023-09-08T20:41:15.794Z</lastmod>
+    <loc>https://rossbowen.github.io/blog/how-long-will-my-machine-last/index.html</loc>
+    <lastmod>2023-11-01T18:39:30.497Z</lastmod>
   </url>
   <url>
     <loc>https://rossbowen.github.io/index.html</loc>
-    <lastmod>2023-09-08T20:41:15.198Z</lastmod>
+    <lastmod>2023-11-01T18:39:29.061Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</loc>
+    <lastmod>2023-11-01T18:39:29.648Z</lastmod>
   </url>
 </urlset>
