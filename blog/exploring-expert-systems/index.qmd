@@ -1,0 +1,274 @@
+---
+title: "Exploring expert systems"
+description: "Simulating data from a DAG to learn about causality."
+date: "2024-05-28"
+execute:
+  cache: true
+---
+
+I've been reading [Data Patterns](https://sqlpatterns.com/p/debugging-your-business-with-data) recently and I caught a line about trying to build a causal model of a business in order to understand it better.
+
+> What I’m drawn to in particular is how the metric tree concept is really a way of expressing a causal model of how a business works. As my friend Cedric Chin says, “The purpose of becoming data driven is to build a causal model of the business in your head. The purpose of doing all this work is that you want to understand how your business actually works and grows, not rely on superstitious beliefs about how your business works and grows.”
+
+This idea got me thinking about causal inference and I recalled a toy expert system used to determine if a patient has dyspnoea (shortness of breath). I found [the original paper](https://www.eecis.udel.edu/~shatkay/Course/papers/Lauritzen1988.pdf) and decided to replicate the results using Stan.
+
+The idea behind the system is:
+
+> Shortness-of-breath (dyspnoea) may be due to tuberculosis, lung cancer or bronchitis, or none of them, or more than one of them. A recent visit to Asia increases the chances of tuberculosis, while smoking is known to be a risk factor for both lung cancer and bronchitis. The results of a single chest X-ray do not discriminate between lung cancer and tuberculosis, as neither does the presence or absence of dyspnoea.
+
+This description leads to a causal Directed Acyclic Graph (DAG) that shows the dependencies among different traits.
+
+```{mermaid}
+%%| fig-align: center
+
+flowchart
+    A[visit to Asia?] --> T[tuberculosis?]
+    S[smoking?] --> L[lung cancer?]
+    S --> B[bronchitis?]
+    T --> E[either tuberculosis or lung cancer?]
+    L --> E
+    E --> X[positive X-ray?]
+    E --> D[dyspnoea?]
+    B --> D
+```
+
+These DAGs help us understand the dependencies between different traits and ask interesting questions about the system. The paper mentions several scenarios:
+
+> A patient presents at a chest clinic with dyspnoea, and has recently visited Asia. Smoking history and chest X-ray are not yet available. The doctor would like to know the chance that each of the diseases is present, and if tuberculosis were ruled out by another test, how would that change the belief in lung cancer? Also, would knowing smoking history or getting an X-ray contribute most information about cancer, given that smoking may 'explain away' the dyspnoea since bronchitis is considered a possibility? Finally, when all information is in, can we identify which was the most influential in forming our judgement?
+
+We aim to simulate data using the model and relationships described in the paper. From these samples, we can estimate the probabilities for each of the questions posed.
+
+## Model specification
+
+The paper provides several conditional probabilities:
+
+1. The probability of someone visiting Asia is 0.01, and the probability of someone smoking is 0.5.
+
+$$ P(\text{asia} = 1) = 0.01 $$
+
+$$ P(\text{smoking} = 1) = 0.5 $$
+
+2. If someone has visited Asia, the probability of tuberculosis is 0.05. If they have not visited Asia, the probability is 0.01.
+
+$$ P(\text{tuberculosis} = 1 \mid \text{asia} = 1) = 0.05 $$
+$$ P(\text{tuberculosis} = 1 \mid \text{asia} = 0) = 0.01 $$
+
+3. If someone smokes, the probability of lung cancer is 0.1. If they do not smoke, the probability is 0.01.
+
+$$ P(\text{lung cancer} = 1 \mid \text{smoking} = 1) = 0.1 $$
+$$ P(\text{lung cancer} = 1 \mid \text{smoking} = 0) = 0.01 $$
+
+4. If someone smokes, the probability of bronchitis is 0.6. If they do not smoke, the probability is 0.3.
+
+$$ P(\text{bronchitis} = 1 \mid \text{smoking} = 1) = 0.6 $$
+$$ P(\text{bronchitis} = 1\mid \text{smoking} = 0) = 0.3 $$
+
+5. Having either tuberculosis or lung cancer is represented by the event "either".
+
+$$ \{ \text{either} = 1 \} = \{ \text{tuberculosis} = 1 \} \vee \{ \text{lung cancer} = 1 \} $$
+
+6. If someone has either tuberculosis or lung cancer, the probability of a positive x-ray is 0.98. If they do not have either, the probability is 0.05. This can be interpreted as the x-ray having 98% sensitivity and 95% specificity.
+
+$$ P(\text{x-ray} = 1 \mid \text{either} = 1) = 0.98 $$
+$$ P(\text{x-ray} = 1 \mid \text{either} = 0) = 0.05 $$
+
+7. Finally, if someone has either tuberculosis or lung cancer and also has bronchitis, the probability of dyspnoea is 0.9. If they have either but not bronchitis, the probability is 0.7. If they do not have either but do have bronchitis, the probability is 0.8. If they have neither and do not have bronchitis, the probability is 0.1.
+
+$$ P(\text{dyspnoea} = 1 \mid \text{either} = 1, \text{bronchitis} = 1) = 0.9 $$
+$$ P(\text{dyspnoea} = 1 \mid \text{either} = 1, \text{bronchitis} = 0) = 0.7 $$
+$$ P(\text{dyspnoea} = 1 \mid \text{either} = 0, \text{bronchitis} = 1) = 0.8 $$
+$$ P(\text{dyspnoea} = 1 \mid \text{either} = 0, \text{bronchitis} = 0) = 0.1 $$
+
+## Simulating
+
+
+I remembered [an old WinBUGS simulation which used this model](https://chjackson.github.io/openbugsdoc/Examples/Asia.html). The WinBUGS documentation was hard to find, but luckily [`@chjackson`](https://github.com/chjackson) has mirrored it on GitHub. 
+Unfortunately, this example is missing from the [example models](https://github.com/stan-dev/example-models) Stan repository.
+
+The WinBUGS simulation chooses to specify each trait as a categorical variable with two categories, instead of modelling them as Bernoulli random variables - I'd guess to make it easier to specify the conditional probabilities.
+
+``` r
+model
+{
+    smoking ~ dcat(p.smoking[1:2])
+    tuberculosis ~ dcat(p.tuberculosis[asia,1:2])
+    lung.cancer ~ dcat(p.lung.cancer[smoking,1:2])
+    bronchitis ~ dcat(p.bronchitis[smoking,1:2])
+    either <- max(tuberculosis,lung.cancer)
+    xray ~ dcat(p.xray[either,1:2])
+    dyspnoea ~ dcat(p.dyspnoea[either,bronchitis,1:2])
+}
+```
+
+In this example, all parameters are known and included as data, so there are no unknown probabilistic parameters like in a typical Stan simulation. The Stan guidance has a section on [sampling without parameters](https://mc-stan.org/docs/reference-manual/mcmc.html#sampling-without-parameters) which shows how we can use a `generated quantities` block to create data based on the model.
+
+```{stan, output.var = "model"}
+data {
+  real<lower=0, upper=1> p_asia;                  // 0.01
+  real<lower=0, upper=1> p_smoking;               // 0.5
+
+  // The following are the conditional probabilities
+  array[2] real<lower=0, upper=1> p_tuberculosis; // 0.01, 0.05
+  array[2] real<lower=0, upper=1> p_lung_cancer;  // 0.01, 0.1
+  array[2] real<lower=0, upper=1> p_bronchitis;   // 0.3, 0.6
+  array[2] real<lower=0, upper=1> p_xray;         // 0.05, 0.98
+  array[2, 2] real<lower=0, upper=1> p_dyspnoea;  // 0.1, 0.8, 0.7, 0.9
+}
+
+generated quantities {
+  int<lower=0, upper=1> asia = bernoulli_rng(p_asia);
+  int<lower=0, upper=1> smoking = bernoulli_rng(p_smoking);
+  int<lower=0, upper=1> tuberculosis = bernoulli_rng(p_tuberculosis[asia + 1]);
+  int<lower=0, upper=1> lung_cancer = bernoulli_rng(p_lung_cancer[smoking + 1]);
+  int<lower=0, upper=1> bronchitis = bernoulli_rng(p_bronchitis[smoking + 1]);
+  int<lower=0, upper=1> either = max(tuberculosis, lung_cancer);
+  int<lower=0, upper=1> xray = bernoulli_rng(p_xray[either + 1]);
+  int<lower=0, upper=1> dyspnoea = bernoulli_rng(p_dyspnoea[either + 1, bronchitis + 1]);
+}
+```
+
+We use indexing to retrieve the appropriate conditional probability at each step. For example, if `asia == 0` then `tuberculosis = bernoulli_rng(p_tuberculosis[1])`, but if `asia == 1` then `tuberculosis = bernoulli_rng(p_tuberculosis[2])`.
+
+We run the model with `rstan` to generate our samples.
+
+```{r}
+#| echo: false
+#| output: false
+
+library(rstan)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+library(rstan)
+library(dplyr)
+library(tidyr)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+set.seed(123)
+
+data_list <- list(
+  p_asia         = 0.01,
+  p_smoking      = 0.5,
+  p_tuberculosis = c(0.01, 0.05),
+  p_lung_cancer  = c(0.01, 0.1),
+  p_bronchitis   = c(0.3, 0.6),
+  p_xray         = c(0.05, 0.98),
+  p_dyspnoea     = matrix(c(0.1, 0.8, 0.7, 0.9), nrow = 2, byrow = TRUE)
+)
+
+fit <- sampling(
+  model,
+  data = data_list,
+  iter = 100000,
+  chains = 4,
+  algorithm = "Fixed_param" # Needed for sampling without parameters
+)
+
+print(fit)
+```
+
+The simulation ran successfully, and the `mean` column of the summary gives the marginal probabilities for each of the traits in the system. Let's take a look at our samples:
+
+```{r}
+params <- rstan::extract(fit)
+samples <- tibble::as_tibble(params)
+
+print(samples)
+```
+
+## Answering some questions
+
+So now we have some simulated data, we can estimate probabilities by looking at the proportion of samples which meet certain conditions. First, let's do some sense checks to make sure our simulated data gives results we'd expect from the model specification.
+
+The model specification says the probability of someone having visited Asia is 0.01, and the probability that someone smokes is 0.5. Our samples agree with this.
+
+```{r}
+samples |>
+  summarise(
+    asia_prob = mean(asia),
+    smoking_prob = mean(smoking)
+  )
+```
+
+To check another, the model specification says that if someone smokes, the probability they have lung cancer is 0.1. If they do not smoke, the probability is 0.01. Our samples agree with this too, so it looks like our simulation has behaved as expected.
+
+```{r}
+samples |>
+  group_by(smoking) |>
+  summarise(lung_cancer_prob = mean(lung_cancer))
+```
+
+Now we can answer the questions from the paper:
+
+> A patient presents at a chest clinic with dyspnoea, and has recently visited Asia. Smoking history and chest X-ray are not yet available. The doctor would like to know the chance that each of the diseases is present.
+
+Here we'll want to filter to samples where `asia == 1` and  `dyspnoea == 1`, and to look at the occurrence of each of the other traits.
+
+```{r}
+samples |>
+  select(-lp__) |>
+  filter(asia == 1, dyspnoea == 1) |>
+  # Make each instance of a disease appear on its own line
+  pivot_longer(cols = c(-asia,-dyspnoea), names_to = "trait") |>
+  group_by(trait) |>
+  summarise(probability = mean(value))
+```
+
+From this we can see it's likely that the patient has bronchitis, and less likely that they have lung cancer or tuberculosis. It's quite likely that the patient smokes, and less likely that a positive x-ray would be seen. The probabilities agree with what was [found in the WinBUGS simulation](https://chjackson.github.io/openbugsdoc/Examples/Asia.html) (which are computed by taking one away from the `mean` in the reported table).
+
+> ...if tuberculosis were ruled out by another test, how would that change the belief in lung cancer? 
+
+Here we filter for samples where `tuberculosis == 0` too.
+
+```{r}
+samples |>
+  select(-lp__) |>
+  filter(asia == 1, dyspnoea == 1, tuberculosis == 0) |>
+  pivot_longer(cols = c(-asia,-dyspnoea), names_to = "trait") |>
+  group_by(trait) |>
+  summarise(probability = mean(value)) |>
+  filter(trait == "lung_cancer")
+```
+
+The probability of lung cancer once we've ruled out tuberculosis hasn't changed by much. 
+
+> Also, would knowing smoking history or getting an X-ray contribute most information about cancer, given that smoking may 'explain away' the dyspnoea since bronchitis is considered a possibility?
+
+Going back to the case where `asia == 1` and  `dyspnoea == 1`, we can look at different cases for smoking history and x-ray results to see how that affects the probability of lung cancer. 
+
+```{r}
+samples |>
+  select(-lp__) |>
+  filter(asia == 1, dyspnoea == 1) |>
+  group_by(smoking) %>%
+  summarise(lung_cancer_prob = mean(lung_cancer))
+
+samples |>
+  select(-lp__) |>
+  filter(asia == 1, dyspnoea == 1) |>
+  group_by(xray) %>%
+  summarise(lung_cancer_prob = mean(lung_cancer))
+```
+
+Here we can see that the x-ray result gives a stronger signal for the presence (or absence) of lung cancer presence than smoking history.
+
+> Finally, when all information is in, can we identify which was the most influential in forming our judgement?
+
+So given `asia == 1` and  `dyspnoea == 1`, we can look at the samples for different known smoking histories and different xray results and see what they do to the probabilities for each of the diseases.
+
+```{r}
+samples |>
+  select(-lp__) |>
+  filter(asia == 1, dyspnoea == 1) |>
+  group_by(smoking, xray) |>
+  summarise(
+    tuberculosis_prob = mean(tuberculosis),
+    lung_cancer_prob = mean(lung_cancer),
+    bronchitis_prob = mean(bronchitis)
+  ) |>
+  arrange(xray)
+```
+
+From these results, we see that a positive x-ray increases the probability of lung cancer and tuberculosis, regardless of smoking status, while smoking increases bronchitis likelihood regardless of the x-ray result. The x-ray result appears to be the most influential additional information here, as it causes the largest changes to probabilities of the different diseases.
