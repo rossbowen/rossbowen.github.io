@@ -1,9 +1,9 @@
 project:
-  title: RB's blog
+  title: Ross Bowen
   type: website
   preview:
     port: 4200
-    browser: true
+    browser: false
     watch-inputs: true
 
 website:
@@ -17,9 +17,20 @@ website:
         href: https://github.com/rossbowen
       - icon: rss
         href: index.xml
+
 format:
   html:
     theme:
-      light: flatly
-      dark: darkly
+      light: default
     code-copy: true
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet" />
+    monofont: "Fira Code"
+
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#>" 

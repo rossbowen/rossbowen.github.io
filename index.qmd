@@ -3,11 +3,12 @@ listing:
   contents: blog
   sort: "date desc"
   type: table
-  fields: [date, title, description]
+  fields: [date, title]
   categories: false
   sort-ui: false
   filter-ui: false
   feed: true
+  date-format: iso
 page-layout: article
 ---
 
@@ -16,95 +17,170 @@ page-layout: article
 //| style: "text-align: center;"
 
 {
-  // Adapted from https://observablehq.com/@ealexander/random-walk
-
-  // Constants controlling simulation
-  const radius = 10;
-  const frameX = window.innerWidth < 768 ? 300 : 799;
-  const frameY = window.innerWidth < 768 ? 300 : 400;
-  const startX = frameX / 2;
-  const startY = frameY / 2;
-  const stepSize = 2 * radius;
-  const stepDur = 200;
-  const trailColors = ["lightblue", "lightgreen", "pink", "coral", "purple"];
-  const trailOpacity = 0.5;
-
-  // Create the SVG container for sim
-  const svg_actual = DOM.svg(frameX, frameY);
-  const svg = d3.select(svg_actual);
-
-  // Create an empty circle to indicate where walk began
-  const startingPoint = svg.append('circle')
-    .attr('cx', startX)
-    .attr('cy', startY)
-    .attr('r', radius)
-    // .style('fill', trailColors[Math.floor(Math.random() * trailColors.length)])
-    // .style('opacity', trailOpacity);
-    .style('stroke', 'black')
-    .style('fill', 'white');
-
-  // Here's our happy walking circle!
-  let walker = svg
-    .append("circle")
-    .attr("cx", startX)
-    .attr("cy", startY)
-    .attr("r", radius)
-    .style("fill", "black");
-
-  function sigmoid(x) {
-    return 1 / (1 + Math.exp(-x));
+  function binomialRandom(n, p) {
+    let x = 0;
+    for (let i = 0; i < n; i++) {
+      if (Math.random() < p) {
+        x++;
+      }
+    }
+    return x;
   }
 
-  // Function to run a single "step" of the random walk
-  // (and kick off the *next* step)
-  function step() {
-    // Choose a direction
-    let axis = Math.random() < 0.5 ? "cx" : "cy";
-    let dir = Math.random() < 0.5 ? -1 * stepSize : stepSize;
-    // Check if next step will take point outside grid
-    if (
-      (axis === "cx" &&
-        (parseInt(walker.attr(axis)) + dir < radius ||
-          parseInt(walker.attr(axis)) + dir > frameX - radius)) ||
-      (axis === "cy" &&
-        (parseInt(walker.attr(axis)) + dir < radius ||
-          parseInt(walker.attr(axis)) + dir > frameY - radius))
-    ) {
-      // If so, change direction to opposite direction
-      dir = -1 * dir;
+  function generateData(particles, places) {
+    const data = [];
+
+    particles.forEach((value, index) => {
+      for (let y = 1; y <= value; y++) {
+        const colour = `hsl(${Math.floor(Math.random() * 360)}, 70%, 70%)`;
+        data.push({ x: index - Math.floor(places / 2), y: y, colour: colour });
+      }
+    });
+
+    return data;
+  }
+
+  function leap(data, places, maxParticles) {
+    const maxYs = data.reduce((acc, p) => {
+      if (!acc[p.x] || p.y > acc[p.x].y) {
+        acc[p.x] = p;
+      }
+      return acc;
+    }, {});
+
+    const topmostParticles = Object.values(maxYs);
+    const particleToModifyIndex = Math.floor(
+      Math.random() * topmostParticles.length
+    );
+    const particleToModify = topmostParticles[particleToModifyIndex];
+
+    const minX = Math.ceil(-(places + 1) / 2);
+    const maxX = Math.floor((places + 1) / 2);
+
+    let newX;
+    if (particleToModify.x === minX) {
+      newX = particleToModify.x + 1;
+    } else if (particleToModify.x === maxX) {
+      newX = particleToModify.x - 1;
+    } else {
+      newX = particleToModify.x + (Math.random() < 0.5 ? -1 : 1);
+      if (newX < minX) newX = minX;
+      if (newX > maxX) newX = maxX;
     }
 
-    // Animate circle's movement in that direction
-    walker
-      .transition()
-      .attr(axis, parseInt(walker.attr(axis)) + dir)
-      .duration(stepDur)
-      .delay(stepDur)
-      .on("end", step); // Once animation is done, kick off another step!
+    const maxYAtNewX =
+      Math.max(0, ...data.filter((p) => p.x === newX).map((p) => p.y)) + 1;
+    if (maxYAtNewX > maxParticles) {
+      return data;
+    }
 
-    // For each step, drop a new circle with low opacity
-    // to create a "trail" showing where we've been.
-    svg
-      .insert("circle", ":first-child") // walker should stay on top
-      .attr("cx", walker.attr("cx"))
-      .attr("cy", walker.attr("cy"))
-      .attr("r", radius)
-      .style(
-        "fill",
-        trailColors[Math.floor(Math.random() * trailColors.length)]
-      )
-      .style("opacity", trailOpacity);
+    data.forEach((p) => {
+      if (p === particleToModify) {
+        p.x = newX;
+        p.y = maxYAtNewX;
+      }
+    });
+
+    return data;
   }
 
-  // Kick off the animation!
-  step();
+  function createSvg(width, height, margin) {
+    return d3.create("svg").attr("viewBox", [0, 0, width, height]);
+  }
 
-  return svg_actual;
+  function createScales(places, maxParticles, width, height, margin) {
+    const x = d3
+      .scaleLinear()
+      .domain([-(places + 1) / 2, (places + 1) / 2])
+      .range([margin.left, width - margin.right]);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, maxParticles + 1])
+      .range([height - margin.bottom, margin.top]);
+
+    return { x, y };
+  }
+
+  function createXAxis(g, x, height, margin, places) {
+    g.attr("transform", `translate(0,${height - margin.bottom})`).call(
+      d3.axisBottom(x).ticks(places).tickSizeOuter(0)
+    );
+  }
+
+  function drawParticles(svg, data, x, y, radius) {
+    return svg
+      .append("g")
+      .selectAll("circle")
+      .data(data)
+      .join("circle")
+      .attr("cx", (d) => x(d.x))
+      .attr("cy", (d) => y(d.y))
+      .attr("r", radius)
+      .attr("fill", (d) => d.colour);
+  }
+
+  function animate(data, places, maxParticles, circles, x, y, duration) {
+    setInterval(() => {
+      const newData = leap(data, places, maxParticles);
+
+      circles = circles.data(newData).join(
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("cx", (d) => x(d.x))
+            .attr("cy", (d) => y(d.y))
+            .attr("fill", (d) => d.colour)
+            .call((enter) => enter.transition().duration(duration)),
+        (update) =>
+          update.call((update) =>
+            update
+              .transition()
+              .duration(duration)
+              .attr("cx", (d) => x(d.x))
+              .attr("cy", (d) => y(d.y))
+              .attr("fill", (d) => d.colour)
+          ),
+        (exit) =>
+          exit.call((exit) => exit.transition().duration(duration).remove())
+      );
+    }, duration);
+  }
+
+  function main() {
+    const width = window.innerWidth < 768 ? 300 : 400;
+    const height = 100
+    const places = 10;
+    const maxParticles = 3;
+    const radius = height / 25;
+    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+    const p = 0.4;
+    const duration = 500;
+
+    const particles = Array.from({ length: places + 1 }, () =>
+      binomialRandom(maxParticles, p)
+    );
+    const data = generateData(particles, places);
+
+    const svg = createSvg(width, height, margin);
+    const { x, y } = createScales(places, maxParticles, width, height, margin);
+    svg.append("g").call((g) => createXAxis(g, x, height, margin, places));
+
+    let circles = drawParticles(svg, data, x, y, radius);
+    animate(data, places, maxParticles, circles, x, y, duration);
+
+    return svg.node();
+  }
+
+  return main();
 }
 ```
 
-::: {style="text-align: right; font-size: 0.8rem;"}
-*Adapted from Eric Alexander's [random walk](https://observablehq.com/@ealexander/random-walk).*
-:::
 
-## Blog posts
+# Hello!
+
+I'm Ross. I'm Head of Analytics at Companies House 📈🏡📊.
+
+I like [Bayesian statistics](https://stat.columbia.edu/~gelman/book/), [multilevel models](http://www.stat.columbia.edu/~gelman/research/published/multi2.pdf) and [R](https://r4ds.hadley.nz/). I think [confidence intervals are overrated](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4742505/pdf/13423_2015_Article_947.pdf) and [misunderstood](https://www.ejwagenmakers.com/inpress/HoekstraEtAlPBR.pdf).
+
+Here's some of my recent stuff:

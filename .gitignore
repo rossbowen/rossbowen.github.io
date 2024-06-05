@@ -2,6 +2,9 @@
 /.quarto/
 /_site/
 
+# Draft articles
+/drafts/
+
 # History files
 .Rhistory
 .Rapp.history
