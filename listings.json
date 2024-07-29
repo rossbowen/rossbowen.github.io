@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/blog/my-ideal-data-api/index.html",
       "/blog/exploring-expert-systems/index.html",
       "/blog/how-long-will-my-machine-last/index.html",
       "/blog/confidence-intervals-in-the-wild/index.html"

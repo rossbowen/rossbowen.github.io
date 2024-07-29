@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.553">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-06-30">
+<meta name="description" content="Sharing a blueprint for an ideal open data API.">
+
+<title>Ross Bowen - My ideal open data API</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&amp;display=swap" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Ross Bowen</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/rossbowen"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">My ideal open data API</h1>
+</div>
+
+<div>
+  <div class="description">
+    Sharing a blueprint for an ideal open data API.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 30, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Most data across government are published in presentational spreadsheets. These spreadsheets are great for being read by humans (<a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">though there’s always ways to make them more accessible</a>), but they’re often not ideal for reusing the data programmatically in tools like R or Python.</p>
+<p>It’s been <a href="https://timharford.com/2013/06/a-statistical-needle-in-a-bureaucratic-haystack/">noted for a while that having data in a “gazillion spreadsheets” isn’t so helpful</a>, and new services like the <a href="https://ukhsa-dashboard.data.gov.uk/">UKSHA dashboard</a>, <a href="https://explore-local-statistics.beta.ons.gov.uk/">Explore local statistics</a> and <a href="https://www.planning.data.gov.uk/">planning.data.gov.uk</a> have popped up to provide a better way. These new services <a href="https://www.spectator.co.uk/article/pouria-hadjibagheri-and-the-uks-abandoned-open-data-revolution/">haven’t gone unnoticed</a>, and there is demand for services which are built in the open and make data available through simple to understand APIs.</p>
+<p>The <a href="https://integrateddataservice.gov.uk/">Integrated Data Service</a> aims to bring <em>ready-to-use data to enable faster and wider collaborative analysis for the public good</em>, but looks primarily focussed on making microdata available in a highly secure trusted research environment. <a href="https://www.gov.uk/government/publications/independent-review-of-the-uk-statistics-authority-uksa-2023/independent-review-of-the-uk-statistics-authority-by-professor-denise-lievesley-cbe-html#integrated-data-service-ids">Some researchers feel uncertain about the purpose of the service</a>. I feel that there’s huge value to be unlocked in also giving attention to data which are routinely published in difficult to reuse spreadsheets and making that data available, in ready-to-use formats, openly.</p>
+<p><a href="https://lindas.admin.ch/">Switzerland has made cool progress</a> to providing their statistical data as a knowledge graph, and I previously worked on a project looking to achieve a similar thing. I learned a lot in that time and wanted to share the blueprint for what I think would make a pretty good data API for datasets (before I forget it all!)</p>
+<section id="goals" class="level2">
+<h2 class="anchored" data-anchor-id="goals">Goals</h2>
+<p>I wouldn’t apply my thinking to every API out there. But I’m thinking specifically about how an analytical customer might get a better experience when trying to work with data.</p>
+<p>I’ve met analysts who aren’t all that familiar with APIs or familiar with JSON, and may not have the tools or experience to properly interact with an API. I was one of them!</p>
+<p>When I was getting started I knew that APIs were a way for me to get data for me to analyse by using some URLs. Chaining together multiple API calls, using strange looking URLs, scouring through documentation and being uncertain about whether my code was the problem or whether I’d made a mistake in forming the URL was all a part of the initially painful experience. I was used to working with tabular data, so navigating highly nested JSON in my tools of choice felt disorienting.</p>
+<p>I didn’t know about <a href="https://twitter.com/housecor/status/1727687082372386904">REST or HATEOAS</a>, or even really care – I just wanted some data!</p>
+<p>With that in mind, I felt that the goal of an open data API is a design which compliments how an analyst finds and explores data.</p>
+<hr>
+<p>When I find a dataset on a website like data.gov.uk or ons.gov.uk, I likely arrived there through a Google search. The process of moving from that webpage to importing the data into my statistical software should be straightforward. I want to quickly load the data into my tool to assess whether it’s suitable for my needs.</p>
+<p>Imagine the specific webpage was <code>https://data.gov.uk/datasets/gross-domestic-product</code>. I’m looking at a nicely formatted webpage in my browser which describes the dataset with metadata about when it was released and who published it etc.</p>
+<p>To load it into R, I want to be able to do:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"https://data.gov.uk/datasets/gross-domestic-product"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>With one line, the latest data is available for me to explore, and the URL is <em>exactly the same</em> as the URL used in my browser. I’m really inspired by <a href="https://ruben.verborgh.org/blog/2013/11/29/the-lie-of-the-api/">this blog post by Ruben Verborgh</a> where the case is made for using content negotiation, which enables this magic.</p>
+<hr>
+<p>In open data circles, the <a href="https://www.go-fair.org/fair-principles/">FAIR principles</a> are frequently discussed. FAIR stands for Findable, Accessible, Interoperable, and Reusable.</p>
+<p>The <a href="https://w3c.github.io/dwbp/bp.html">Data on the Web Best Practices</a> offer recommendations similar to the FAIR principles, and I’m a big fan of this document. These recommendations were developed based on <a href="https://www.w3.org/TR/dwbp-ucr/">use cases and requirements</a> collected from open data users.</p>
+<p>To summarise broadly, the advice boils down to:</p>
+<ul>
+<li>Choose a globally unique and persistent identifier for a dataset.</li>
+<li>Provide metadata, including information about structure, provenance, licences, etc.</li>
+<li>Do dataset versioning well.</li>
+<li>Be a good web citizen by leveraging HTTP and offering multiple formats.</li>
+</ul>
+<p>Additionally, I recommend ensuring that if you provide data in a tabular format (like CSV), it should be formatted as <a href="https://r4ds.had.co.nz/tidy-data.html">tidy data</a>.</p>
+<p>I’ll explain each of these points in more detail.</p>
+</section>
+<section id="choose-a-globally-unique-and-persistent-identifier" class="level2">
+<h2 class="anchored" data-anchor-id="choose-a-globally-unique-and-persistent-identifier">Choose a globally unique and persistent identifier</h2>
+<p>It’s recommended to use a globally unique and persistent identifier for a dataset to ensure that it can always be reliably found and referenced over time. By assigning a unique ID to each dataset, we avoid confusion and duplication, making it easier for researchers and systems worldwide to locate and access the exact dataset we’re referring to.</p>
+<p>A persistent identifier means the link to the dataset will not break or change, even if the dataset moves to a different location or is updated, which helps maintain the dataset’s long-term accessibility and usability. <a href="https://www.w3.org/Provider/Style/URI">Cool URIs don’t change</a>.</p>
+<p>We carefully considered what the URL scheme should look like and ended up with something roughly like this:</p>
+<ul>
+<li><code>https://data.gov.uk</code></li>
+<li><code>https://data.gov.uk/datasets</code></li>
+<li><code>https://data.gov.uk/themes/economy</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05.csv</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05.json</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05/versions/1</code></li>
+</ul>
+<p>The main features of these URLs are:</p>
+<ul>
+<li>We pay attention to the URL structure and naming conventions, as they are permanent.</li>
+<li>The URLs use <code>kebab-case</code>, which is beneficial for search engine optimisation.</li>
+<li>The URLs are designed to be fairly human-readable.</li>
+<li>URLs for related resources build upon one another in a hierarchical structure.</li>
+<li>We use ISO standards for years, quarters, months, etc.</li>
+<li>The URLs for datasets don’t contain the theme or other descriptive metadata, as this may change or a dataset may have multiple themes.</li>
+<li>We follow the principle that <a href="https://www.w3.org/Provider/Style/URI">Cool URIs don’t change</a>.</li>
+</ul>
+<hr>
+<p>Many data APIs require us to use a different URL to <em>access</em> a dataset from the URL of the webpage that <em>describes</em> the dataset. So which one of these URLs truly uniquely represents the dataset? Which one should show up in Google searches, or be used in academic papers?</p>
+<p>One of the big debating points was whether it’s significantly more effort for users to request data from:</p>
+<ul>
+<li><code>https://api.data.gov.uk/v2/datasets/gross-domestic-product/edition/2024-05/csv</code></li>
+</ul>
+<p>instead of:</p>
+<ul>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product.csv</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/edition/2024-05.csv</code></li>
+</ul>
+<p>and I’d argue that yes, it is:</p>
+<ul>
+<li>Sharing the first URL with a colleague loses the direct connection to the user-friendly webpage that describes the dataset. There is no obvious relationship between this API URL and the URL that users would see on a search engine, which makes it harder to find and understand the dataset.</li>
+<li>Using an <code>api</code> subdomain, including an API version like <code>/v2/</code>, and requiring users to specify a dataset edition complicates the process of quickly assessing if the data is suitable – users end up mutating URLs by hand.</li>
+<li>Additionally, including an API version such as <code>/v2/</code> implies that the dataset’s identifier might change with future API versions, which means the URL might not remain persistent.</li>
+</ul>
+<p>My aim was to try and work a bit harder behind the scenes, so we didn’t have to pass the complexity of manipulating URLs to the user.</p>
+</section>
+<section id="use-tidy-data" class="level2">
+<h2 class="anchored" data-anchor-id="use-tidy-data">Use tidy data</h2>
+<p>Providing data in a presentational format, such as a spreadsheet, can be helpful to read the data but difficult to reuse the data. Data needs to be available as <a href="https://r4ds.had.co.nz/tidy-data.html">tidy data</a> in another format such as CSV in order to be reusable. <a href="https://www.robinlinacre.com/parquet_api/">Robin Linacre argues for parquet</a> (and makes a lot of other great points I agree with!)</p>
+<p>Consider this example taken from the <a href="https://www.w3.org/TR/vocab-data-cube/">RDF data cube vocabulary</a>, which describes life expectancy broken down by region, sex and time:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># An example of how the table looks once imported into R:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A tibble: 6 x 7</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  V1                V2        V3        V4        V5     V6    V7  </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&lt;</span>chr<span class="sc">&gt;</span>             <span class="er">&lt;</span>chr<span class="sc">&gt;</span>     <span class="er">&lt;</span>chr<span class="sc">&gt;</span>     <span class="er">&lt;</span>chr<span class="sc">&gt;</span>     <span class="er">&lt;</span>chr<span class="sc">&gt;</span>  <span class="er">&lt;</span>chr<span class="sc">&gt;</span> <span class="er">&lt;</span>chr<span class="sc">&gt;</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="st">""</span>                <span class="dv">2004-2006</span> <span class="dv">2005-2007</span> <span class="dv">2006-2008</span> <span class="cn">NA</span>     <span class="cn">NA</span>    <span class="cn">NA</span>  </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="st">""</span>                Male      Female    Male      Female Male  Female</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span> <span class="st">"Newport"</span>         <span class="fl">76.7</span>      <span class="fl">80.7</span>      <span class="fl">77.1</span>      <span class="fl">80.9</span>   <span class="fl">77.0</span>  <span class="fl">81.5</span>  </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span> <span class="st">"Cardiff"</span>         <span class="fl">78.7</span>      <span class="fl">83.3</span>      <span class="fl">78.6</span>      <span class="fl">83.7</span>   <span class="fl">78.7</span>  <span class="fl">83.4</span>  </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span> <span class="st">"Monmouthshire"</span>   <span class="fl">76.6</span>      <span class="fl">81.3</span>      <span class="fl">76.5</span>      <span class="fl">81.5</span>   <span class="fl">76.6</span>  <span class="fl">81.7</span>  </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span> <span class="st">"Merthyr Tydfil"</span>  <span class="fl">75.5</span>      <span class="fl">79.1</span>      <span class="fl">75.5</span>      <span class="fl">79.4</span>   <span class="fl">74.9</span>  <span class="fl">79.6</span>  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The table is a cross tabulation of the data, with the columns representing the time period of the observation and the sex of the observed population and the rows representing different locations. Having multiple header rows which span multiple columns makes the data difficult to read with software. Downstream users of the data will have to wrangle the data into a usable format.</p>
+<p>Importing the above table into a statistical software such as R produces a result with some problems:</p>
+<ul>
+<li>The header rows are not treated as headers</li>
+<li>The header row representing time period is not fully populated</li>
+<li>The first column contains empty strings</li>
+<li>numbers in the data are treated as strings, due to columns having mixed data types</li>
+</ul>
+<p>Organising the table as tidy data, with each variable having its own column gives an output which can be instantly read into R, without need for further cleaning.</p>
+<p>For data to be classified as tidy data:</p>
+<ol type="1">
+<li>Each variable forms a column</li>
+<li>Each observation forms a row</li>
+<li>Each type of observational unit forms a table</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A tibble: 24 × 4</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>   area    sex    period    life_expectancy</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>   <span class="sc">&lt;</span>chr<span class="sc">&gt;</span>   <span class="er">&lt;</span>chr<span class="sc">&gt;</span>  <span class="er">&lt;</span>chr<span class="sc">&gt;</span>               <span class="er">&lt;</span>dbl<span class="sc">&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a> <span class="dv">1</span> Newport Male   <span class="dv">2004-2006</span>            <span class="fl">76.7</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a> <span class="dv">2</span> Newport Female <span class="dv">2004-2006</span>            <span class="fl">80.7</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a> <span class="dv">3</span> Newport Male   <span class="dv">2005-2007</span>            <span class="fl">77.1</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a> <span class="dv">4</span> Newport Female <span class="dv">2005-2007</span>            <span class="fl">80.9</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a> <span class="dv">5</span> Newport Male   <span class="dv">2006-2008</span>            <span class="fl">77.0</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a> <span class="dv">6</span> Newport Female <span class="dv">2006-2008</span>            <span class="fl">81.5</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a> <span class="dv">7</span> Cardiff Male   <span class="dv">2004-2006</span>            <span class="fl">78.7</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a> <span class="dv">8</span> Cardiff Female <span class="dv">2004-2006</span>            <span class="fl">83.3</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a> <span class="dv">9</span> Cardiff Male   <span class="dv">2005-2007</span>            <span class="fl">78.6</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="dv">10</span> Cardiff Female <span class="dv">2005-2007</span>            <span class="fl">83.7</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ℹ 14 more rows</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ℹ Use `print(n = ...)` to see more rows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="do-dataset-versioning-well" class="level2">
+<h2 class="anchored" data-anchor-id="do-dataset-versioning-well">Do dataset versioning well</h2>
+<p>The <a href="https://www.w3.org/TR/vocab-dcat-3/">Data Catalog Vocabulary (DCAT) - Version 3</a> is currently going through its finalisation process, and one of the updates in the third version of the standard was the introduction of a <code>DatasetSeries</code> and <a href="https://www.w3.org/TR/vocab-dcat-3/#dataset-versions">some guidance on how to handle versioning of datasets</a>.</p>
+<p>The way <a href="https://www.w3.org/TR/vocab-dcat-3/#ex-dataset-series-and-versions">DCAT describes things in its example</a>, it organises datasets into three layers.</p>
+<ul>
+<li>A <code>DatasetSeries</code> at the top, which groups together related datasets which are released at a regular cadence (such as the Gross Domestic Product).</li>
+<li>A set of <code>Dataset</code>s which form part of the series. We referred to these as <em>editions</em> of a dataset series.</li>
+<li>A set of <code>Dataset</code>s which are the various <em>versions</em> of a particular <em>edition</em>.</li>
+</ul>
+<p>As a diagram I imagine it like this:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">graph TD
+    A[DatasetSeries: GDP] --&gt; B[Edition: GDP July]
+    B --&gt; G[Version: GDP July v1]
+    A --&gt; C[Edition: GDP August]
+    C --&gt; H[Version: GDP August v1]
+    A --&gt; D[Edition: GDP September]
+    D --&gt; E[Version: GDP September v1]
+    D --&gt; F[Version: GDP September v2]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>This allows us the ability to differentiate between releases of new data which are on a scheduled and expected basis (e.g.&nbsp;when we update each month with new data), vs.&nbsp;when we need to make a correction to a dataset due to some unexpected error or revision.</p>
+<p>In terms of the identifiers for all of these resources, I imagined them looking like:</p>
+<ul>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product</code>
+<ul>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09</code>
+<ul>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/1</code></li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/2</code></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Additionally, I felt like an API could make a helpful assumption for users who didn’t specify a request for a specific edition or version. Should a user request <code>https://data.gov.uk/datasets/gross-domestic-product.csv</code>, it seemed like a sensible default would be to route the user through to the <em>latest</em> version of the <em>latest</em> edition – in this instance <code>https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/2.csv</code>.</p>
+<section id="api-versioning" class="level3">
+<h3 class="anchored" data-anchor-id="api-versioning">API versioning</h3>
+<p>Another big debating point related to versioning was whether an API version identifier should feature in the identifier given to a dataset. My feeling is that the canonical identifier for a dataset should be a URL which does not have an API version identifier in it.</p>
+<p>So ultimately, it can be fine to offer <code>https://data.gov.uk/v2/datasets/gross-domestic-product</code>, but only if the canonical URL, <code>https://data.gov.uk/datasets/gross-domestic-product</code>, works too.</p>
+</section>
+</section>
+<section id="provide-metadata" class="level2">
+<h2 class="anchored" data-anchor-id="provide-metadata">Provide metadata</h2>
+<p>Many analysts use Google and other search engines to find information. By using good metadata and following standards, we make it easier for them to find and understand the data. The Data on the Web Best Practices gives a few different types of metadata which we should provide: descriptive metadata, structural metadata, licensing, provenance and data quality information being key examples.</p>
+<p>There’s a few standards in this space which are of particular interest:</p>
+<ul>
+<li><a href="https://www.w3.org/TR/json-ld11/">JSON-LD</a></li>
+<li><a href="https://www.w3.org/TR/vocab-dcat-3/">Data Catalog Vocabulary (DCAT) - Version 3</a></li>
+<li><a href="https://schema.org">Schema.org</a></li>
+<li><a href="https://w3c.github.io/csvw/primer/">CSV on the Web (CSVW)</a></li>
+</ul>
+<p><a href="https://developers.google.com/search/docs/appearance/structured-data/dataset">Google’s guidance</a> shows how to embed JSON-LD in a webpage’s HTML to add structured data about a dataset. This structured data can be used for dataset catalogs or other widgets. For example, <a href="https://www.google.com/search?q=gdp+of+uk">searching Google for the UK’s GDP</a> brings up an interactive chart at the top of the results, providing a quick and intuitive way to understand the data and get an answer.</p>
+<p>Search engines typically recommend using Schema.org, but Google’s guidance suggests they also supports DCAT. We believed DCAT has a more developed vocabulary for describing dataset metadata, so I prefer using it over Schema.org in this instance. The DCAT standard <a href="https://www.w3.org/TR/vocab-dcat-3/#dcat-sdo">gives a mapping between DCAT and Schema.org</a>.</p>
+<blockquote class="blockquote">
+<p>We can understand structured data in web pages about datasets, using either <a href="https://schema.org/Dataset">schema.org Dataset markup</a>, or equivalent structures represented in <a href="https://www.w3.org/">W3C</a>’s Data Catalog Vocabulary (DCAT) format. We also are exploring experimental support for structured data based on <a href="https://www.w3.org/TR/tabular-data-primer/">W3C CSVW</a>, and expect to evolve and adapt our approach as best practices for dataset description emerge. For more information about our approach to dataset discovery, see <a href="https://blog.google/products/search/making-it-easier-discover-datasets/">Making it easier to discover datasets</a>.</p>
+</blockquote>
+<p>Google and the Data on the Web Best Practices also mention the CSV on the Web (CSVW) standard, which allows us to provide structural metadata about tabular datasets such as those found in CSV files. We were also interested in CSVW because it allows us to <a href="https://w3c.github.io/csvw/csv2rdf/">map tabular data into RDF</a>. We had some success creating RDF data cubes using the <a href="https://www.w3.org/TR/vocab-data-cube/">RDF data cube vocabulary</a>, and this approach has a lot of potential, but it requires significant effort and technical knowledge.</p>
+<p>JSON-LD is a way to organise data that makes it easier for different systems to understand and use it together. We can create a JSON-LD <code>@context</code> to name the keys in our JSON however we like, for example, using “summary” instead of “abstract”, while remaining interoperable with other metadata sources. The <code>@context</code> will map these keys back to the identifiers which are part of the metadata standards we’re using. This also allows us to provide interoperable responses in different languages, such as Welsh.</p>
+<hr>
+<p>Bringing these standards together, I imagined a metadata response for a dataset series looking something like this:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@context"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/ns#"</span><span class="fu">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product"</span><span class="fu">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@type"</span><span class="fu">:</span> <span class="st">"dcat:DatasetSeries"</span><span class="fu">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"identifier"</span><span class="fu">:</span> <span class="st">"gdp"</span><span class="fu">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"title"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP)"</span><span class="fu">,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"summary"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP) is the total monetary value of all goods and services produced within a country's borders in a specific time period."</span><span class="fu">,</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"description"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP) is a comprehensive measure of a nation's overall economic activity. It represents the total monetary value of all goods and services produced within a country's borders in a specific time period, typically annually or quarterly."</span><span class="fu">,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-07-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"next_release"</span><span class="fu">:</span> <span class="st">"2023-10-20T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"publisher"</span><span class="fu">:</span> <span class="st">"office-for-national-statistics"</span><span class="fu">,</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"creator"</span><span class="fu">:</span> <span class="st">"office-for-national-statistics"</span><span class="fu">,</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"contact_point"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product Enquiries"</span><span class="fu">,</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"email"</span><span class="fu">:</span> <span class="st">"gdp@data.gov.uk"</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"themes"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"economy"</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"frequency"</span><span class="fu">:</span> <span class="st">"monthly"</span><span class="fu">,</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"keywords"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gdp"</span><span class="ot">,</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"inflation"</span><span class="ot">,</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross domestic product"</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"licence"</span><span class="fu">:</span> <span class="st">"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"</span><span class="fu">,</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"spatial_coverage"</span><span class="fu">:</span> <span class="st">"K02000001"</span><span class="fu">,</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"temporal_coverage"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"start"</span><span class="fu">:</span> <span class="st">"1989-01-01T00:00:00+00:00"</span><span class="fu">,</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"end"</span><span class="fu">:</span> <span class="st">"2023-09-01T00:00:00+01:00"</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"temporal_resolution"</span><span class="fu">:</span> <span class="st">"P1M"</span><span class="fu">,</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"editions"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09"</span><span class="fu">,</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-09-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-09-22T00:07:00+01:00"</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-08"</span><span class="fu">,</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-08-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-08-21T00:07:00+01:00"</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-07"</span><span class="fu">,</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-07-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-07-21T00:07:00+01:00"</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Under <code>editions</code> we’ve avoided a load of nested JSON and instead chosen to deliver a subset of important metadata items to the user. A user has enough information to make a decision about whether they should enquire further and make another request.</p>
+<p>This was also a debating point, as I think in other API designs this sort of nesting seems to be frowned upon. In <a href="https://jsonapi.org/">json:api</a> or <a href="https://stateless.co/hal_specification.html">HAL</a>, additional resources are listed under a <code>_links</code> keyword with the idea that the user would make additional calls to the API to get further information. This approach makes sense for software engineers writing integrations, as it keeps responses small and standardised. However, I personally appreciate having a bit of additional nested metadata to help me decide whether to make an additional request.</p>
+<hr>
+<p>A request for metadata about a particular edition of a dataset would look very similar and likely reuse much of the metadata from the data series. Some core differences would include:</p>
+<ul>
+<li>We’d include some of the structural metadata.</li>
+<li>We’d include information about <code>versions</code> and <code>distributions</code>, rather than <code>editions</code>.</li>
+</ul>
+<p>I imagined a response looking like this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@context"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/ns#"</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09"</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"@type"</span><span class="fu">:</span> <span class="st">"dcat:Dataset"</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"identifier"</span><span class="fu">:</span> <span class="st">"gdp-2023-09"</span><span class="fu">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"title"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP): September 2023"</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"summary"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP) is the total monetary value of all goods and services produced within a country's borders in a specific time period."</span><span class="fu">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"description"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product (GDP) is a comprehensive measure of a nation's overall economic activity. It represents the total monetary value of all goods and services produced within a country's borders in a specific time period, typically annually or quarterly."</span><span class="fu">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-09-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-09-22T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"next_release"</span><span class="fu">:</span> <span class="st">"2023-10-20T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"publisher"</span><span class="fu">:</span> <span class="st">"office-for-national-statistics"</span><span class="fu">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"creator"</span><span class="fu">:</span> <span class="st">"office-for-national-statistics"</span><span class="fu">,</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"contact_point"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Gross Domestic Product Enquiries"</span><span class="fu">,</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"email"</span><span class="fu">:</span> <span class="st">"gdp@data.gov.uk"</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"themes"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"economy"</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"frequency"</span><span class="fu">:</span> <span class="st">"monthly"</span><span class="fu">,</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"keywords"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gdp"</span><span class="ot">,</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"inflation"</span><span class="ot">,</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross domestic product"</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"licence"</span><span class="fu">:</span> <span class="st">"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"</span><span class="fu">,</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"spatial_coverage"</span><span class="fu">:</span> <span class="st">"K02000001"</span><span class="fu">,</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"temporal_coverage"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"start"</span><span class="fu">:</span> <span class="st">"1989-01-01T00:00:00+00:00"</span><span class="fu">,</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"end"</span><span class="fu">:</span> <span class="st">"2023-09-01T00:00:00+01:00"</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"temporal_resolution"</span><span class="fu">:</span> <span class="st">"P1M"</span><span class="fu">,</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"version"</span><span class="fu">:</span> <span class="dv">2</span><span class="fu">,</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"current_version"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/2"</span><span class="fu">,</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"versions"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/1"</span><span class="fu">,</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-09-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-09-21T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"version_notes"</span><span class="fu">:</span> <span class="st">"This version was replaced following the correction of an error in the September 2023 data."</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/2"</span><span class="fu">,</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"issued"</span><span class="fu">:</span> <span class="st">"2023-09-22T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"modified"</span><span class="fu">:</span> <span class="st">"2023-09-22T00:07:00+01:00"</span><span class="fu">,</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"distributions"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>        <span class="fu">{</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@id"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv"</span><span class="fu">,</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"@type"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"dcat:Distribution"</span><span class="ot">,</span> <span class="st">"csvw:Table"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"url"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv"</span><span class="fu">,</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"download_url"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv"</span><span class="fu">,</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"csvw_metadata"</span><span class="fu">:</span> <span class="st">"https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv-metadata.json"</span><span class="fu">,</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"media_type"</span><span class="fu">:</span> <span class="st">"text/csv"</span><span class="fu">,</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"table_schema"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>                <span class="dt">"columns"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">{</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"title"</span><span class="fu">:</span> <span class="st">"geography"</span><span class="fu">,</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"datatype"</span><span class="fu">:</span> <span class="st">"string"</span><span class="fu">,</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"description"</span><span class="fu">:</span> <span class="st">"The geographic area covered by the index."</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">{</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"title"</span><span class="fu">:</span> <span class="st">"time_period"</span><span class="fu">,</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"datatype"</span><span class="fu">:</span> <span class="st">"string"</span><span class="fu">,</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"description"</span><span class="fu">:</span> <span class="st">"The time period covered by the index."</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">{</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"title"</span><span class="fu">:</span> <span class="st">"gross_domestic_product"</span><span class="fu">,</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"datatype"</span><span class="fu">:</span> <span class="st">"decimal"</span><span class="fu">,</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">"description"</span><span class="fu">:</span> <span class="st">"The value of the Gross Domestic Product."</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">}</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>                <span class="ot">]</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Here we’re embedding CSVW structural metadata within a wider JSON-LD document. The CSVW standard gives quite a specific specification of how a CSVW metadata file needs to look and be structured, and our experience was that it was a bit constraining. But if we store our metadata in a triple store, we should be able to construct a file which matches that described by the spec, or to do things like dynamically translate between using DCAT and Schema.org.</p>
+<p>When we were creating RDF data cubes, I felt it was most natural metadata about these to add these as an additional distribution, so a dataset edition could have both a CSV representation and an RDF data cube representation.</p>
+</section>
+<section id="be-a-good-web-citizen" class="level2">
+<h2 class="anchored" data-anchor-id="be-a-good-web-citizen">Be a good web citizen</h2>
+<p>I briefly mentioned content negotiation and <a href="https://ruben.verborgh.org/blog/2013/11/29/the-lie-of-the-api/">this blog post by Ruben Verborgh</a>. Given that we have assigned a unique identifier to a dataset, such as <code>https://data.gov.uk/datasets/gross-domestic-product</code>, it would be beneficial to use web standards to allow users to request different representations of that dataset – whether they want an HTML webpage, a CSV, or a JSON format.</p>
+<p>The idea is that when you request <code>https://data.gov.uk/datasets/gross-domestic-product</code> from a web browser, the browser asks for an HTML page that is suitable for human consumption. But from our statistical tools, users could request a representation like CSV. Both tools use the same unique identifier, but ask for different representations.</p>
+<p>By doing this, we ensure the dataset has a single identifier; a single URL that is indexed by Google, can be cited in academic papers and used in code without awkward URL manipulations.</p>
+<p>Implementing content negotiation does require extra effort. I noticed <a href="https://ukparliament.github.io/ontologies/meta/weeknotes/2024/20/#content-negotiation-and-caching-catastrophes">a recent weeknote from parliament.gov.uk</a> where they faced issues with incorrect resource caching, but it’s great to see their attempts to provide this functionality and weighing up their options.</p>
+<p>But for what it’s worth, I also think appending the filetype to the URL is reasonable. Requesting <code>https://data.gov.uk/datasets/gross-domestic-product.csv</code> and receiving a CSV would likely be seen as helpful. If I wanted the dataset’s data and metadata as a JSON, I could ask for <code>https://data.gov.uk/datasets/gross-domestic-product.json</code> instead.</p>
+<p>This approach introduces different identifiers with distinct meanings:</p>
+<ul>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product</code> represents a dataset, which is an abstract resource with no specific serialisation or representation.</li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product.csv</code> represents the CSV distribution of that dataset.</li>
+<li><code>https://data.gov.uk/datasets/gross-domestic-product.json</code> represents the JSON distribution of that dataset.</li>
+</ul>
+</section>
+<section id="final-words" class="level2">
+<h2 class="anchored" data-anchor-id="final-words">Final words</h2>
+<p>With so many new services looking to solve similar problems, I hope these thoughts are helpful to others and show what inspired me as I was thinking how to provide a good dataset API to users.</p>
+<p>If nothing else, I’d highlight that the <a href="https://w3c.github.io/dwbp/bp.html">Data on the Web Best Practices</a> is an incredible resource for those of us trying to make data more easily available to consumers.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/rossbowen\.github\.io");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
