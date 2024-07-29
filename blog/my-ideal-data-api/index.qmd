@@ -1,0 +1,401 @@
+---
+title: "My ideal open data API"
+description: "Sharing a blueprint for an ideal open data API."
+date: "2024-06-30"
+---
+
+Most data across government are published in presentational spreadsheets. These spreadsheets are great for being read by humans ([though there's always ways to make them more accessible](https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/)), but they're often not ideal for reusing the data programmatically in tools like R or Python.
+
+It's been [noted for a while that having data in a "gazillion spreadsheets" isn't so helpful](https://timharford.com/2013/06/a-statistical-needle-in-a-bureaucratic-haystack/), and new services like the [UKSHA dashboard](https://ukhsa-dashboard.data.gov.uk/), [Explore local statistics](https://explore-local-statistics.beta.ons.gov.uk/) and [planning.data.gov.uk](https://www.planning.data.gov.uk/) have popped up to provide a better way. These new services [haven't gone unnoticed](https://www.spectator.co.uk/article/pouria-hadjibagheri-and-the-uks-abandoned-open-data-revolution/), and there is demand for services which are built in the open and make data available through simple to understand APIs.
+
+The [Integrated Data Service](https://integrateddataservice.gov.uk/) aims to bring _ready-to-use data to enable faster and wider collaborative analysis for the public good_, but looks primarily focussed on making microdata available in a highly secure trusted research environment. [Some researchers feel uncertain about the purpose of the service](https://www.gov.uk/government/publications/independent-review-of-the-uk-statistics-authority-uksa-2023/independent-review-of-the-uk-statistics-authority-by-professor-denise-lievesley-cbe-html#integrated-data-service-ids). I feel that there's huge value to be unlocked in also giving attention to data which are routinely published in difficult to reuse spreadsheets and making that data available, in ready-to-use formats, openly.
+
+[Switzerland has made cool progress](https://lindas.admin.ch/) to providing their statistical data as a knowledge graph, and I previously worked on a project looking to achieve a similar thing. I learned a lot in that time and wanted to share the blueprint for what I think would make a pretty good data API for datasets (before I forget it all!)
+
+## Goals
+
+I wouldn't apply my thinking to every API out there. But I'm thinking specifically about how an analytical customer might get a better experience when trying to work with data.
+
+I've met analysts who aren't all that familiar with APIs or familiar with JSON, and may not have the tools or experience to properly interact with an API. I was one of them!
+
+When I was getting started I knew that APIs were a way for me to get data for me to analyse by using some URLs. Chaining together multiple API calls, using strange looking URLs, scouring through documentation and being uncertain about whether my code was the problem or whether I'd made a mistake in forming the URL was all a part of the initially painful experience. I was used to working with tabular data, so navigating highly nested JSON in my tools of choice felt disorienting.
+
+I didn't know about [REST or HATEOAS](https://twitter.com/housecor/status/1727687082372386904), or even really care -- I just wanted some data!
+
+With that in mind, I felt that the goal of an open data API is a design which compliments how an analyst finds and explores data.
+
+--------------------------------------------------------------------------------
+
+When I find a dataset on a website like data.gov.uk or ons.gov.uk, I likely arrived there through a Google search. The process of moving from that webpage to importing the data into my statistical software should be straightforward. I want to quickly load the data into my tool to assess whether it's suitable for my needs.
+
+Imagine the specific webpage was `https://data.gov.uk/datasets/gross-domestic-product`. I'm looking at a nicely formatted webpage in my browser which describes the dataset with metadata about when it was released and who published it etc. 
+
+To load it into R, I want to be able to do:
+
+```r
+library(readr)
+
+df <- read_csv("https://data.gov.uk/datasets/gross-domestic-product")
+```
+
+With one line, the latest data is available for me to explore, and the URL is _exactly the same_ as the URL used in my browser. I'm really inspired by [this blog post by Ruben Verborgh](https://ruben.verborgh.org/blog/2013/11/29/the-lie-of-the-api/) where the case is made for using content negotiation, which enables this magic.
+
+--------------------------------------------------------------------------------
+
+In open data circles, the [FAIR principles](https://www.go-fair.org/fair-principles/) are frequently discussed. FAIR stands for Findable, Accessible, Interoperable, and Reusable.
+
+The [Data on the Web Best Practices](https://w3c.github.io/dwbp/bp.html) offer recommendations similar to the FAIR principles, and I’m a big fan of this document. These recommendations were developed based on [use cases and requirements](https://www.w3.org/TR/dwbp-ucr/) collected from open data users.
+
+To summarise broadly, the advice boils down to:
+
+- Choose a globally unique and persistent identifier for a dataset.
+- Provide metadata, including information about structure, provenance, licences, etc.
+- Do dataset versioning well.
+- Be a good web citizen by leveraging HTTP and offering multiple formats.
+
+Additionally, I recommend ensuring that if you provide data in a tabular format (like CSV), it should be formatted as [tidy data](https://r4ds.had.co.nz/tidy-data.html).
+
+I'll explain each of these points in more detail.
+
+## Choose a globally unique and persistent identifier
+
+It's recommended to use a globally unique and persistent identifier for a dataset to ensure that it can always be reliably found and referenced over time. By giving a unique ID to each dataset, we avoid confusion and duplication, making it easier for researchers and systems to locate and access the exact dataset we're referring to.
+
+A persistent identifier means the link to the dataset will not break or change, even if the dataset moves to a different location or is updated. [Cool URIs don’t change](https://www.w3.org/Provider/Style/URI).
+
+We carefully considered what the URL scheme should look like and ended up with something roughly like this:
+
+- `https://data.gov.uk`
+- `https://data.gov.uk/datasets`
+- `https://data.gov.uk/themes/economy`
+- `https://data.gov.uk/datasets/gross-domestic-product`
+- `https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05`
+- `https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05.csv`
+- `https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05.json`
+- `https://data.gov.uk/datasets/gross-domestic-product/editions/2024-05/versions/1`
+
+The main features of these URLs are:
+
+- We pay attention to the URL structure and naming conventions, as they are permanent.
+- The URLs use `kebab-case`, which is beneficial for search engine optimisation.
+- The URLs are designed to be fairly human-readable.
+- URLs for related resources build upon one another in a hierarchical structure.
+- We use ISO standards for years, quarters, months, etc.
+- The URLs for datasets don't contain the theme or other descriptive metadata, as this may change or a dataset may have multiple themes.
+- We follow the principle that [Cool URIs don’t change](https://www.w3.org/Provider/Style/URI).
+
+--------------------------------------------------------------------------------
+
+Many data APIs require us to use a different URL to _access_ a dataset from the URL of the webpage that _describes_ the dataset. So which one of these URLs truly uniquely represents the dataset? Which one should show up in Google searches, or be used in academic papers?
+
+One of the big debating points was whether it’s significantly more effort for users to request data from:
+
+- `https://api.data.gov.uk/v2/datasets/gross-domestic-product/edition/2024-05/csv`
+
+instead of:
+
+- `https://data.gov.uk/datasets/gross-domestic-product.csv`
+- `https://data.gov.uk/datasets/gross-domestic-product/edition/2024-05.csv`
+
+and I'd argue that yes, it is:
+
+- Sharing the first URL with a colleague loses the direct connection to the user-friendly webpage that describes the dataset. There is no obvious relationship between this API URL and the URL that users would see on a search engine, which makes it harder to find and understand the dataset.
+- Using an `api` subdomain, including an API version like `/v2/`, and requiring users to specify a dataset edition complicates the process of quickly assessing if the data is suitable -- users end up mutating URLs by hand.
+- Additionally, including an API version such as `/v2/` implies that the dataset's identifier might change with future API versions, which means the URL might not remain persistent.
+
+My aim was to try and work a bit harder behind the scenes, so we didn't have to pass the complexity of manipulating URLs to the user.
+
+## Use tidy data
+
+Providing data in a presentational format, such as a spreadsheet, can be helpful to read the data but difficult to reuse the data. Data needs to be available as [tidy data](https://r4ds.had.co.nz/tidy-data.html) in another format such as CSV in order to be reusable. [Robin Linacre argues for parquet](https://www.robinlinacre.com/parquet_api/) (and makes a lot of other great points I agree with!)
+
+Consider this example taken from the [RDF data cube vocabulary](https://www.w3.org/TR/vocab-data-cube/), which describes life expectancy broken down by region, sex and time:
+
+```r
+# An example of how the table looks once imported into R:
+
+# A tibble: 6 x 7
+  V1                V2        V3        V4        V5     V6    V7  
+  <chr>             <chr>     <chr>     <chr>     <chr>  <chr> <chr> 
+1 ""                2004-2006 2005-2007 2006-2008 NA     NA    NA  
+2 ""                Male      Female    Male      Female Male  Female
+3 "Newport"         76.7      80.7      77.1      80.9   77.0  81.5  
+4 "Cardiff"         78.7      83.3      78.6      83.7   78.7  83.4  
+5 "Monmouthshire"   76.6      81.3      76.5      81.5   76.6  81.7  
+6 "Merthyr Tydfil"  75.5      79.1      75.5      79.4   74.9  79.6  
+```
+
+The table is a cross tabulation of the data, with the columns representing the time period of the observation and the sex of the observed population and the rows representing different locations. Having multiple header rows which span multiple columns makes the data difficult to read with software. Downstream users of the data will have to wrangle the data into a usable format.
+
+Importing the above table into a statistical software such as R produces a result with some problems:
+
+- The header rows are not treated as headers
+- The header row representing time period is not fully populated
+- The first column contains empty strings
+- Numbers in the data are treated as strings, due to columns having mixed data types
+
+Organising the table as tidy data, with each variable having its own column gives an output which can be instantly read into R, without need for further cleaning.
+
+For data to be classified as tidy data:
+
+1. Each variable forms a column
+2. Each observation forms a row
+3. Each type of observational unit forms a table
+
+```r
+# A tibble: 24 × 4
+   area    sex    period    life_expectancy
+   <chr>   <chr>  <chr>               <dbl>
+ 1 Newport Male   2004-2006            76.7
+ 2 Newport Female 2004-2006            80.7
+ 3 Newport Male   2005-2007            77.1
+ 4 Newport Female 2005-2007            80.9
+ 5 Newport Male   2006-2008            77.0
+ 6 Newport Female 2006-2008            81.5
+ 7 Cardiff Male   2004-2006            78.7
+ 8 Cardiff Female 2004-2006            83.3
+ 9 Cardiff Male   2005-2007            78.6
+10 Cardiff Female 2005-2007            83.7
+# ℹ 14 more rows
+# ℹ Use `print(n = ...)` to see more rows
+```
+
+## Do dataset versioning well
+
+The [Data Catalog Vocabulary (DCAT) - Version 3](https://www.w3.org/TR/vocab-dcat-3/) is currently going through its finalisation process, and one of the updates in the third version of the standard was the introduction of a `DatasetSeries` and [some guidance on how to handle versioning of datasets](https://www.w3.org/TR/vocab-dcat-3/#dataset-versions).
+
+The way [DCAT describes things in its example](https://www.w3.org/TR/vocab-dcat-3/#ex-dataset-series-and-versions), it organises datasets into three layers. 
+
+- A `DatasetSeries` at the top, which groups together related datasets which are released at a regular cadence (such as the Gross Domestic Product).
+- A set of `Dataset`s which form part of the series. We referred to these as _editions_ of a dataset series.
+- A set of `Dataset`s which are the various _versions_ of a particular _edition_.
+
+As a diagram I imagine it like this:
+
+```{mermaid}
+graph TD
+    A[DatasetSeries: GDP] --> B[Edition: GDP July]
+    B --> G[Version: GDP July v1]
+    A --> C[Edition: GDP August]
+    C --> H[Version: GDP August v1]
+    A --> D[Edition: GDP September]
+    D --> E[Version: GDP September v1]
+    D --> F[Version: GDP September v2]
+```
+
+This allows us the ability to differentiate between releases of new data which are on a scheduled and expected basis (e.g. when we update each month with new data), vs. when we need to make a correction to a dataset due to some unexpected error or revision.
+
+In terms of the identifiers for all of these resources, I imagined them looking like:
+
+- `https://data.gov.uk/datasets/gross-domestic-product`
+    - `https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09`
+        - `https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/1`
+        - `https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/2`
+
+Additionally, I felt like an API could make a helpful assumption for users who didn't specify a request for a specific edition or version. Should a user request `https://data.gov.uk/datasets/gross-domestic-product.csv`, it seemed like a sensible default would be to route the user through to the _latest_ version of the _latest_ edition -- in this instance `https://data.gov.uk/datasets/gross-domestic-product/editions/2023-09/versions/2.csv`.
+
+### API versioning
+
+Another big debating point related to versioning was whether an API version identifier should feature in the identifier given to a dataset. My feeling is that the canonical identifier for a dataset should be a URL which does not have an API version identifier in it.
+
+So ultimately, it can be fine to offer `https://data.gov.uk/v2/datasets/gross-domestic-product`, but only if the canonical URL, `https://data.gov.uk/datasets/gross-domestic-product`, works too.
+
+## Provide metadata
+
+Many analysts use Google and other search engines to find information. By using good metadata and following standards, we make it easier for them to find and understand the data. The Data on the Web Best Practices gives a few different types of metadata which we should provide: descriptive metadata, structural metadata, licensing, provenance and data quality information being key examples.
+
+There's a few standards in this space which are of particular interest:
+
+- [JSON-LD](https://www.w3.org/TR/json-ld11/)
+- [Data Catalog Vocabulary (DCAT) - Version 3](https://www.w3.org/TR/vocab-dcat-3/)
+- [Schema.org](https://schema.org)
+- [CSV on the Web (CSVW)](https://w3c.github.io/csvw/primer/)
+
+[Google's guidance](https://developers.google.com/search/docs/appearance/structured-data/dataset) shows how to embed JSON-LD in a webpage's HTML to add structured data about a dataset. This structured data can be used for dataset catalogs or other widgets. For example, [searching Google for the UK's GDP](https://www.google.com/search?q=gdp+of+uk) brings up an interactive chart at the top of the results, providing a quick and intuitive way to understand the data and get an answer.
+
+Search engines typically recommend using Schema.org, but Google's guidance suggests they also supports DCAT. We believed DCAT has a more developed vocabulary for describing dataset metadata, so I prefer using it over Schema.org in this instance. The DCAT standard [gives a mapping between DCAT and Schema.org](https://www.w3.org/TR/vocab-dcat-3/#dcat-sdo).
+
+> We can understand structured data in web pages about datasets, using either [schema.org Dataset markup](https://schema.org/Dataset), or equivalent structures represented in [W3C](https://www.w3.org/)'s Data Catalog Vocabulary (DCAT) format. We also are exploring experimental support for structured data based on [W3C CSVW](https://www.w3.org/TR/tabular-data-primer/), and expect to evolve and adapt our approach as best practices for dataset description emerge. For more information about our approach to dataset discovery, see [Making it easier to discover datasets](https://blog.google/products/search/making-it-easier-discover-datasets/).
+
+Google and the Data on the Web Best Practices also mention the CSV on the Web (CSVW) standard, which allows us to provide structural metadata about tabular datasets such as those found in CSV files. We were also interested in CSVW because it allows us to [map tabular data into RDF](https://w3c.github.io/csvw/csv2rdf/). We had some success creating RDF data cubes using the [RDF data cube vocabulary](https://www.w3.org/TR/vocab-data-cube/), and this approach has a lot of potential, but it requires significant effort and technical knowledge.
+
+JSON-LD is a way to organise data that makes it easier for different systems to understand and use it together. We can create a JSON-LD `@context` to name the keys in our JSON however we like, for example, using "summary" instead of "abstract", while remaining interoperable with other metadata sources. The `@context` will map these keys back to the identifiers which are part of the metadata standards we’re using. This also allows us to provide interoperable responses in different languages, such as Welsh.
+
+--------------------------------------------------------------------------------
+
+Bringing these standards together, I imagined a metadata response for a dataset series looking something like this:
+
+```json
+{
+    "@context": "https://data.gov.uk/ns#",
+    "@id": "https://data.gov.uk/datasets/gross-domestic-product",
+    "@type": "dcat:DatasetSeries",
+    "identifier": "gdp",
+    "title": "Gross Domestic Product (GDP)",
+    "summary": "Gross Domestic Product (GDP) is the total monetary value of all goods and services produced within a country's borders in a specific time period.",
+    "description": "Gross Domestic Product (GDP) is a comprehensive measure of a nation's overall economic activity. It represents the total monetary value of all goods and services produced within a country's borders in a specific time period, typically annually or quarterly.",
+    "issued": "2023-07-21T00:07:00+01:00",
+    "next_release": "2023-10-20T00:07:00+01:00",
+    "publisher": "office-for-national-statistics",
+    "creator": "office-for-national-statistics",
+    "contact_point": {
+        "name": "Gross Domestic Product Enquiries",
+        "email": "gdp@data.gov.uk"
+    },
+    "themes": [
+        "economy"
+    ],
+    "frequency": "monthly",
+    "keywords": [
+        "gdp",
+        "inflation",
+        "gross domestic product"
+    ],
+    "licence": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "spatial_coverage": "K02000001",
+    "temporal_coverage": {
+        "start": "1989-01-01T00:00:00+00:00",
+        "end": "2023-09-01T00:00:00+01:00"
+    },
+    "temporal_resolution": "P1M",
+    "editions": [
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-09",
+            "issued": "2023-09-21T00:07:00+01:00",
+            "modified": "2023-09-22T00:07:00+01:00"
+        },
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-08",
+            "issued": "2023-08-21T00:07:00+01:00",
+            "modified": "2023-08-21T00:07:00+01:00"
+        },
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-07",
+            "issued": "2023-07-21T00:07:00+01:00",
+            "modified": "2023-07-21T00:07:00+01:00"
+        }
+    ]
+}
+```
+
+Under `editions` we've avoided a load of nested JSON and instead chosen to deliver a subset of important metadata items to the user. A user has enough information to make a decision about whether they should enquire further and make another request.
+
+This was also a debating point, as I think in other API designs this sort of nesting seems to be frowned upon. In [json:api](https://jsonapi.org/) or [HAL](https://stateless.co/hal_specification.html), additional resources are listed under a `_links` keyword with the idea that the user would make additional calls to the API to get further information. This approach makes sense for software engineers writing integrations, as it keeps responses small and standardised. However, I personally appreciate having a bit of additional nested metadata to help me decide whether to make an additional request.
+
+--------------------------------------------------------------------------------
+
+A request for metadata about a particular edition of a dataset would look very similar and likely reuse much of the metadata from the data series. Some core differences would include:
+
+- We'd include some of the structural metadata.
+- We'd include information about `versions` and `distributions`, rather than `editions`.
+
+I imagined a response looking like this:
+
+```json
+{
+    "@context": "https://data.gov.uk/ns#",
+    "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-09",
+    "@type": "dcat:Dataset",
+    "identifier": "gdp-2023-09",
+    "title": "Gross Domestic Product (GDP): September 2023",
+    "summary": "Gross Domestic Product (GDP) is the total monetary value of all goods and services produced within a country's borders in a specific time period.",
+    "description": "Gross Domestic Product (GDP) is a comprehensive measure of a nation's overall economic activity. It represents the total monetary value of all goods and services produced within a country's borders in a specific time period, typically annually or quarterly.",
+    "issued": "2023-09-21T00:07:00+01:00",
+    "modified": "2023-09-22T00:07:00+01:00",
+    "next_release": "2023-10-20T00:07:00+01:00",
+    "publisher": "office-for-national-statistics",
+    "creator": "office-for-national-statistics",
+    "contact_point": {
+        "name": "Gross Domestic Product Enquiries",
+        "email": "gdp@data.gov.uk"
+    },
+    "themes": [
+        "economy"
+    ],
+    "frequency": "monthly",
+    "keywords": [
+        "gdp",
+        "inflation",
+        "gross domestic product"
+    ],
+    "licence": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "spatial_coverage": "K02000001",
+    "temporal_coverage": {
+        "start": "1989-01-01T00:00:00+00:00",
+        "end": "2023-09-01T00:00:00+01:00"
+    },
+    "temporal_resolution": "P1M",
+    "version": 2,
+    "current_version": "https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/2",
+    "versions": [
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/1",
+            "issued": "2023-09-21T00:07:00+01:00",
+            "modified": "2023-09-21T00:07:00+01:00",
+            "version_notes": "This version was replaced following the correction of an error in the September 2023 data."
+        },
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-09/version/2",
+            "issued": "2023-09-22T00:07:00+01:00",
+            "modified": "2023-09-22T00:07:00+01:00",
+        },
+    ],
+    "distributions": [
+        {
+            "@id": "https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv",
+            "@type": ["dcat:Distribution", "csvw:Table"],
+            "url": "https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv",
+            "download_url": "https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv",
+            "csvw_metadata": "https://data.gov.uk/datasets/gross-domestic-product/2023-09.csv-metadata.json",
+            "media_type": "text/csv",
+            "table_schema": {
+                "columns": [
+                    {
+                        "title": "geography",
+                        "datatype": "string",
+                        "description": "The geographic area covered by the index."
+                    },
+                    {
+                        "title": "time_period",
+                        "datatype": "string",
+                        "description": "The time period covered by the index."
+                    },
+                    {
+                        "title": "gross_domestic_product",
+                        "datatype": "decimal",
+                        "description": "The value of the Gross Domestic Product."
+                    }
+                ]
+            }
+        }
+    ]
+}
+```
+
+Here we're embedding CSVW structural metadata within a wider JSON-LD document. The CSVW standard gives quite a specific specification of how a CSVW metadata file needs to look and be structured, and our experience was that it was a bit constraining. But if we store our metadata in a triple store, we should be able to construct a file which matches that described by the spec, or to do things like dynamically translate between using DCAT and Schema.org.
+
+When we were creating RDF data cubes, I felt it was most natural metadata about these to add these as an additional distribution, so a dataset edition could have both a CSV representation and an RDF data cube representation.
+
+## Be a good web citizen
+
+I briefly mentioned content negotiation and [this blog post by Ruben Verborgh](https://ruben.verborgh.org/blog/2013/11/29/the-lie-of-the-api/). Given that we have assigned a unique identifier to a dataset, such as `https://data.gov.uk/datasets/gross-domestic-product`, it would be beneficial to use web standards to allow users to request different representations of that dataset -- whether they want an HTML webpage, a CSV, or a JSON format.
+
+The idea is that when you request `https://data.gov.uk/datasets/gross-domestic-product` from a web browser, the browser asks for an HTML page that is suitable for human consumption. But from our statistical tools, users could request a representation like CSV. Both tools use the same unique identifier, but ask for different representations.
+
+By doing this, we ensure the dataset has a single identifier; a single URL that is indexed by Google, can be cited in academic papers and used in code without awkward URL manipulations.
+
+Implementing content negotiation does require extra effort. I noticed [a recent weeknote from parliament.gov.uk](https://ukparliament.github.io/ontologies/meta/weeknotes/2024/20/#content-negotiation-and-caching-catastrophes) where they faced issues with incorrect resource caching, but it's great to see their attempts to provide this functionality and weighing up their options.
+
+But for what it's worth, I also think appending the filetype to the URL is reasonable. Requesting `https://data.gov.uk/datasets/gross-domestic-product.csv` and receiving a CSV would likely be seen as helpful. If I wanted the dataset's data and metadata as a JSON, I could ask for `https://data.gov.uk/datasets/gross-domestic-product.json` instead.
+
+This approach introduces different identifiers with distinct meanings:
+
+- `https://data.gov.uk/datasets/gross-domestic-product` represents a dataset, which is an abstract resource with no specific serialisation or representation.
+- `https://data.gov.uk/datasets/gross-domestic-product.csv` represents the CSV distribution of that dataset.
+- `https://data.gov.uk/datasets/gross-domestic-product.json` represents the JSON distribution of that dataset.
+
+## Final words
+
+With so many new services looking to solve similar problems, I hope these thoughts are helpful to others and show what inspired me as I was thinking how to provide a good dataset API to users.
+
+If nothing else, I'd highlight that the [Data on the Web Best Practices](https://w3c.github.io/dwbp/bp.html) is an incredible resource for those of us trying to make data more easily available to consumers.
