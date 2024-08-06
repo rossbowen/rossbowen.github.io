@@ -61,8 +61,8 @@ font-style: inherit;">"https://data.gov.uk/datasets/gross-domestic-product"</spa
 </section>
 <section id="choose-a-globally-unique-and-persistent-identifier" class="level2">
 <h2 class="anchored" data-anchor-id="choose-a-globally-unique-and-persistent-identifier">Choose a globally unique and persistent identifier</h2>
-<p>It’s recommended to use a globally unique and persistent identifier for a dataset to ensure that it can always be reliably found and referenced over time. By assigning a unique ID to each dataset, we avoid confusion and duplication, making it easier for researchers and systems worldwide to locate and access the exact dataset we’re referring to.</p>
-<p>A persistent identifier means the link to the dataset will not break or change, even if the dataset moves to a different location or is updated, which helps maintain the dataset’s long-term accessibility and usability. <a href="https://www.w3.org/Provider/Style/URI">Cool URIs don’t change</a>.</p>
+<p>It’s recommended to use a globally unique and persistent identifier for a dataset to ensure that it can always be reliably found and referenced over time. By giving a unique ID to each dataset, we avoid confusion and duplication, making it easier for researchers and systems to locate and access the exact dataset we’re referring to.</p>
+<p>A persistent identifier means the link to the dataset will not break or change, even if the dataset moves to a different location or is updated. <a href="https://www.w3.org/Provider/Style/URI">Cool URIs don’t change</a>.</p>
 <p>We carefully considered what the URL scheme should look like and ended up with something roughly like this:</p>
 <ul>
 <li><code>https://data.gov.uk</code></li>
@@ -240,7 +240,7 @@ font-style: inherit;">79.6</span>  </span></code></pre></div>
 <li>The header rows are not treated as headers</li>
 <li>The header row representing time period is not fully populated</li>
 <li>The first column contains empty strings</li>
-<li>numbers in the data are treated as strings, due to columns having mixed data types</li>
+<li>Numbers in the data are treated as strings, due to columns having mixed data types</li>
 </ul>
 <p>Organising the table as tidy data, with each variable having its own column gives an output which can be instantly read into R, without need for further cleaning.</p>
 <p>For data to be classified as tidy data:</p>
