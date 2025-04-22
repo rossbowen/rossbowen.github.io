@@ -10,7 +10,176 @@
 <atom:link href="https://rossbowen.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description></description>
 <generator>quarto-1.6.42</generator>
-<lastBuildDate>Sat, 29 Jun 2024 23:00:00 GMT</lastBuildDate>
+<lastBuildDate>Mon, 21 Apr 2025 23:00:00 GMT</lastBuildDate>
+<item>
+  <title>QUALIFY in SQL</title>
+  <link>https://rossbowen.github.io/blog/qualify-in-sql/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>Last year, while starting to use Snowflake, I discovered the <code>QUALIFY</code> keyword in SQL.</p>
+<p><code>QUALIFY</code> filters results based on a window function. It’s not part of the SQL standard and so won’t be supported in all SQL engines, but I think it has good coverage in some of the newer ones.</p>
+<p>Let’s say we have an <code>employees</code> table, courtesy of ChatGPT:</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb1-1">┌────┬─────────┬─────────────┬────────┐</span>
+<span id="cb1-2">│ <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">id</span> ┆ name    ┆ department  ┆ salary │</span>
+<span id="cb1-3">╞════╪═════════╪═════════════╪════════╡</span>
+<span id="cb1-4">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span> ┆ Alice   ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">70000</span> │</span>
+<span id="cb1-5">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> ┆ Bob     ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">72000</span> │</span>
+<span id="cb1-6">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span> ┆ Charlie ┆ HR          ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">65000</span> │</span>
+<span id="cb1-7">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span> ┆ Diana   ┆ HR          ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">68000</span> │</span>
+<span id="cb1-8">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span> ┆ Eve     ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">71000</span> │</span>
+<span id="cb1-9">└────┴─────────┴─────────────┴────────┘</span></code></pre></div>
+<p>We want to find the top earner for each department. With <code>QUALIFY</code>, the query becomes concise:</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">SELECT</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> </span>
+<span id="cb2-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">FROM</span> employees</span>
+<span id="cb2-3">QUALIFY <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">RANK</span>() <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">OVER</span> (<span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">PARTITION</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">BY</span> department <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">ORDER</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">BY</span> salary <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">DESC</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>;</span></code></pre></div>
+<p>Here, <code>RANK()</code> ranks employees within each department by salary, and <code>QUALIFY</code> filters the results to show only the top earner in each department.</p>
+<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1">┌────┬───────┬─────────────┬────────┐</span>
+<span id="cb3-2">│ <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">id</span> ┆ name  ┆ department  ┆ salary │</span>
+<span id="cb3-3">╞════╪═══════╪═════════════╪════════╡</span>
+<span id="cb3-4">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> ┆ Bob   ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">72000</span> │</span>
+<span id="cb3-5">│  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span> ┆ Diana ┆ HR          ┆  <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">68000</span> │</span>
+<span id="cb3-6">└────┴───────┴─────────────┴────────┘</span></code></pre></div>
+<p>Previously when doing something like this, I would use a common table expression (CTE):</p>
+<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">WITH</span> ranked_employees <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">AS</span> (</span>
+<span id="cb4-2">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">SELECT</span> </span>
+<span id="cb4-3">        <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>,</span>
+<span id="cb4-4">        <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">RANK</span>() <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">OVER</span> (<span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">PARTITION</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">BY</span> department <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">ORDER</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">BY</span> salary <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">DESC</span>) <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">AS</span> employee_rank</span>
+<span id="cb4-5">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">FROM</span> employees</span>
+<span id="cb4-6">)</span>
+<span id="cb4-7"></span>
+<span id="cb4-8"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">SELECT</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span></span>
+<span id="cb4-9"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">FROM</span> ranked_employees</span>
+<span id="cb4-10"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">WHERE</span> employee_rank <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>;</span></code></pre></div>
+<p>As a small query, I still think using a CTE is fine, but when using multiple CTEs in a larger or more complex query, the brevity of <code>QUALIFY</code> is really nice.</p>
+<p>Want to try it out? Check out the <a href="https://shell.duckdb.org/#queries=v0,CREATE-TABLE-employees-AS%0ASELECT-*-FROM-(VALUES%0A----(1%2C-'Alice'%2C-'Engineering'%2C-70000)%2C%0A----(2%2C-'Bob'%2C-'Engineering'%2C-72000)%2C%0A----(3%2C-'Charlie'%2C-'HR'%2C-65000)%2C%0A----(4%2C-'Diana'%2C-'HR'%2C-68000)%2C%0A----(5%2C-'Eve'%2C-'Engineering'%2C-71000)%0A)-AS-t(id%2C-name%2C-department%2C-salary)~%0A,SELECT-*-FROM-employees~,SELECT-*-FROM-employees-QUALIFY-RANK()-OVER-(PARTITION-BY-department-ORDER-BY-salary-DESC)-%3D-1~">DuckDB web shell</a>.</p>
+
+
+
+ ]]></description>
+  <guid>https://rossbowen.github.io/blog/qualify-in-sql/</guid>
+  <pubDate>Mon, 21 Apr 2025 23:00:00 GMT</pubDate>
+</item>
 <item>
   <title>My ideal open data API</title>
   <link>https://rossbowen.github.io/blog/my-ideal-data-api/</link>
@@ -1334,175 +1503,6 @@ font-style: inherit;">}</span></span></code></pre></div>
 
  ]]></description>
   <guid>https://rossbowen.github.io/blog/my-ideal-data-api/</guid>
-  <pubDate>Sat, 29 Jun 2024 23:00:00 GMT</pubDate>
-</item>
-<item>
-  <title>QUALIFY in SQL</title>
-  <link>https://rossbowen.github.io/blog/qualify-in-sql/</link>
-  <description><![CDATA[ 
-
-
-
-
-<p>Last year, while starting to use Snowflake, I discovered the <code>QUALIFY</code> keyword in SQL.</p>
-<p><code>QUALIFY</code> filters results based on a window function. It’s not part of the SQL standard and so won’t be supported in all SQL engines, but I think it has good coverage in some of the newer ones.</p>
-<p>Let’s say we have an <code>employees</code> table, courtesy of ChatGPT:</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb1-1">┌────┬─────────┬─────────────┬────────┐</span>
-<span id="cb1-2">│ <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">id</span> ┆ name    ┆ department  ┆ salary │</span>
-<span id="cb1-3">╞════╪═════════╪═════════════╪════════╡</span>
-<span id="cb1-4">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span> ┆ Alice   ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">70000</span> │</span>
-<span id="cb1-5">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">2</span> ┆ Bob     ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">72000</span> │</span>
-<span id="cb1-6">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">3</span> ┆ Charlie ┆ HR          ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">65000</span> │</span>
-<span id="cb1-7">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">4</span> ┆ Diana   ┆ HR          ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">68000</span> │</span>
-<span id="cb1-8">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">5</span> ┆ Eve     ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">71000</span> │</span>
-<span id="cb1-9">└────┴─────────┴─────────────┴────────┘</span></code></pre></div>
-<p>We want to find the top earner for each department. With <code>QUALIFY</code>, the query becomes concise:</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">SELECT</span> <span class="op" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">*</span> </span>
-<span id="cb2-2"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">FROM</span> employees</span>
-<span id="cb2-3">QUALIFY <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">RANK</span>() <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">OVER</span> (<span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">PARTITION</span> <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">BY</span> department <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">ORDER</span> <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">BY</span> salary <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">DESC</span>) <span class="op" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>;</span></code></pre></div>
-<p>Here, <code>RANK()</code> ranks employees within each department by salary, and <code>QUALIFY</code> filters the results to show only the top earner in each department.</p>
-<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1">┌────┬───────┬─────────────┬────────┐</span>
-<span id="cb3-2">│ <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">id</span> ┆ name  ┆ department  ┆ salary │</span>
-<span id="cb3-3">╞════╪═══════╪═════════════╪════════╡</span>
-<span id="cb3-4">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">2</span> ┆ Bob   ┆ Engineering ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">72000</span> │</span>
-<span id="cb3-5">│  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">4</span> ┆ Diana ┆ HR          ┆  <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">68000</span> │</span>
-<span id="cb3-6">└────┴───────┴─────────────┴────────┘</span></code></pre></div>
-<p>Previously when doing something like this, I would use a common table expression (CTE):</p>
-<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">WITH</span> ranked_employees <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">AS</span> (</span>
-<span id="cb4-2">    <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">SELECT</span> </span>
-<span id="cb4-3">        <span class="op" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">*</span>,</span>
-<span id="cb4-4">        <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">RANK</span>() <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">OVER</span> (<span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">PARTITION</span> <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">BY</span> department <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">ORDER</span> <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">BY</span> salary <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">DESC</span>) <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">AS</span> employee_rank</span>
-<span id="cb4-5">    <span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">FROM</span> employees</span>
-<span id="cb4-6">)</span>
-<span id="cb4-7"></span>
-<span id="cb4-8"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">SELECT</span> <span class="op" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">*</span></span>
-<span id="cb4-9"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">FROM</span> ranked_employees</span>
-<span id="cb4-10"><span class="kw" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">WHERE</span> employee_rank <span class="op" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>;</span></code></pre></div>
-<p>As a small query, I still think using a CTE is fine, but when using multiple CTEs in a larger or more complex query, the brevity of <code>QUALIFY</code> is really nice.</p>
-<p>Want to try it out? Check out the <a href="https://shell.duckdb.org/#queries=v0,CREATE-TABLE-employees-AS%0ASELECT-*-FROM-(VALUES%0A----(1%2C-'Alice'%2C-'Engineering'%2C-70000)%2C%0A----(2%2C-'Bob'%2C-'Engineering'%2C-72000)%2C%0A----(3%2C-'Charlie'%2C-'HR'%2C-65000)%2C%0A----(4%2C-'Diana'%2C-'HR'%2C-68000)%2C%0A----(5%2C-'Eve'%2C-'Engineering'%2C-71000)%0A)-AS-t(id%2C-name%2C-department%2C-salary)~%0A,SELECT-*-FROM-employees~,SELECT-*-FROM-employees-QUALIFY-RANK()-OVER-(PARTITION-BY-department-ORDER-BY-salary-DESC)-%3D-1~">DuckDB web shell</a>.</p>
-
-
-
- ]]></description>
-  <guid>https://rossbowen.github.io/blog/qualify-in-sql/</guid>
   <pubDate>Sat, 29 Jun 2024 23:00:00 GMT</pubDate>
 </item>
 <item>
