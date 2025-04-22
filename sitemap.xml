@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://rossbowen.github.io/index.html</loc>
-    <lastmod>2024-08-06T10:34:26.610Z</lastmod>
-  </url>
-  <url>
     <loc>https://rossbowen.github.io/blog/how-long-will-my-machine-last/index.html</loc>
-    <lastmod>2024-08-06T10:34:26.603Z</lastmod>
+    <lastmod>2025-04-21T19:08:23.699Z</lastmod>
   </url>
   <url>
     <loc>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/index.html</loc>
-    <lastmod>2024-08-06T10:34:26.588Z</lastmod>
-  </url>
-  <url>
-    <loc>https://rossbowen.github.io/blog/exploring-expert-systems/index.html</loc>
-    <lastmod>2024-08-06T10:34:26.595Z</lastmod>
+    <lastmod>2025-04-21T19:08:23.698Z</lastmod>
   </url>
   <url>
     <loc>https://rossbowen.github.io/blog/my-ideal-data-api/index.html</loc>
-    <lastmod>2024-08-06T10:34:26.604Z</lastmod>
+    <lastmod>2025-04-21T19:08:23.699Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rossbowen.github.io/index.html</loc>
+    <lastmod>2025-04-21T19:08:23.699Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rossbowen.github.io/blog/exploring-expert-systems/index.html</loc>
+    <lastmod>2025-04-21T19:08:23.699Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rossbowen.github.io/blog/qualify-in-sql/index.html</loc>
+    <lastmod>2025-04-22T06:50:32.064Z</lastmod>
   </url>
 </urlset>
