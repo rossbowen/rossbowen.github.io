@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/blog/shut-the-box/index.html",
       "/blog/qualify-in-sql/index.html",
       "/blog/my-ideal-data-api/index.html",
       "/blog/exploring-expert-systems/index.html",

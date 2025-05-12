@@ -10,7 +10,1474 @@
 <atom:link href="https://rossbowen.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description></description>
 <generator>quarto-1.6.42</generator>
-<lastBuildDate>Mon, 21 Apr 2025 23:00:00 GMT</lastBuildDate>
+<lastBuildDate>Sat, 10 May 2025 23:00:00 GMT</lastBuildDate>
+<item>
+  <title>Shut the box!</title>
+  <link>https://rossbowen.github.io/blog/shut-the-box/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>A few years ago I went to Thailand with some friends. We were hanging out in a bar one night and ended up playing this game called Shut the Box.</p>
+<p><img src="https://rossbowen.github.io/blog/shut-the-box/shut-the-box.jpeg" class="img-fluid"></p>
+<p>The board has numbers 1 to 9. Each turn, you roll two dice. You can then flip or “shut” any combination of numbers which sum to the total of the two dice. The game ends when you can no longer make a valid move. You win the game if no numbers are left to shut, otherwise you score the sum of the remaining open numbers.</p>
+<p>We all played and started to develop our own strategies. I knew that the sum of two dice is most likely to be 7 and convinced myself that as 7 was the most likely sum and 1, 2, 3 and 4 were the least likely, I should prioritise shutting 1, 2, 3 and 4.</p>
+<p>My friend’s strategy was to prioritise 7, 8 and 9 if it was possible to shut them, and if not, to prioritise the smallest numbers. He did much better and my intuition was completely wrong! But I’ve always wondered if I could find the mathematically optimal strategy.</p>
+<p>Thinking about this as a stochastic optimisation problem, we can model the game as a Markov decision process.</p>
+<section id="markov-decision-processes" class="level2">
+<h2 class="anchored" data-anchor-id="markov-decision-processes">Markov decision processes</h2>
+<p>A Markov decision process models the evolution of a system over time. At each time step, an agent makes a decision that affects the future state of the system.</p>
+<p>The process has a state space <img src="https://latex.codecogs.com/png.latex?S"> and evolves in discrete time steps <img src="https://latex.codecogs.com/png.latex?t%20=%201,%202%20%5Cldots"></p>
+<p>At each time step, the agent chooses from a set of possible actions. Typically, the set of available actions depends on the current state <img src="https://latex.codecogs.com/png.latex?s%20%5Cin%20S">, and is denoted <img src="https://latex.codecogs.com/png.latex?A(s)">.</p>
+<p>Given a state <img src="https://latex.codecogs.com/png.latex?s%20%5Cin%20S"> and an action <img src="https://latex.codecogs.com/png.latex?a%20%5Cin%20A(s)">, the system transitions to a new state <img src="https://latex.codecogs.com/png.latex?s'"> according to a transition probability <img src="https://latex.codecogs.com/png.latex?P(s'%20%5Cmid%20s,%20a)">. Each transition gives a reward <img src="https://latex.codecogs.com/png.latex?R(s,%20s',%20a)">. These transition probabilities are Markovian – the next state depends only on the current state and action, not on the history of past states and actions.</p>
+<p>The typical goal of the agent is to choose actions that maximise the expected cumulative reward over time. This means finding a <em>policy</em> <img src="https://latex.codecogs.com/png.latex?%5Cpi(s)"> – a probabilistic mapping of states to actions – which maximises the expected total reward.</p>
+</section>
+<section id="our-model" class="level2">
+<h2 class="anchored" data-anchor-id="our-model">Our model</h2>
+<p>For a game of Shut the Box, the state space <img src="https://latex.codecogs.com/png.latex?S"> consists of all possible subsets of the numbers 1 to 9. The state represents the set of numbers that are not shut. The game starts with all numbers open, <img src="https://latex.codecogs.com/png.latex?s%20=%20%5C%7B1,%202,%20%5Cldots,%209%5C%7D">.</p>
+<p>The available actions at state <img src="https://latex.codecogs.com/png.latex?s"> depend on the total <img src="https://latex.codecogs.com/png.latex?d"> of two dice. <img src="https://latex.codecogs.com/png.latex?A_d(s)"> is the set of all subsets of <img src="https://latex.codecogs.com/png.latex?s"> whose elements sum to <img src="https://latex.codecogs.com/png.latex?d%20%5Cin%20%5C%7B%202,%203,%20%5Cldots,%2012%5C%7D">. The chosen action <img src="https://latex.codecogs.com/png.latex?a%20%5Cin%20A_d(s)"> represents the numbers to shut on that turn.</p>
+<p>For example, say the remaining numbers were <img src="https://latex.codecogs.com/png.latex?s%20=%20%5C%7B1,%202,%203,%204,%205%5C%7D">, and we roll <img src="https://latex.codecogs.com/png.latex?d%20=%208">, we could shut <img src="https://latex.codecogs.com/png.latex?A_8(s)%20=%20%5C%7B%5C%7B3,%205%5C%7D">, <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%202,%205%5C%7D">, or <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%203,%204%5C%7D%5C%7D">.</p>
+<p>The transitions between different states are deterministic based on this choice, so <img src="https://latex.codecogs.com/png.latex?s'%20=%20s%20%5Csetminus%20a">.</p>
+<p>We play over the discrete time steps <img src="https://latex.codecogs.com/png.latex?t%20=%201,%202,%20%5Cldots"> and the game ends when there are no valid moves left, <img src="https://latex.codecogs.com/png.latex?A_d(s)%20=%20%5Cemptyset">. At that point a cost is incurred: <img src="https://latex.codecogs.com/png.latex?R(s)%20=%20%5Csum_%7Bi%20%5Cin%20s%7D%20i."></p>
+<p>Our goal is to find a policy <img src="https://latex.codecogs.com/png.latex?%5Cpi(s,%20d)"> that minimises the expected cost.</p>
+</section>
+<section id="solution" class="level2">
+<h2 class="anchored" data-anchor-id="solution">Solution</h2>
+<p>Let <img src="https://latex.codecogs.com/png.latex?V(s)"> be the expected cost at the end of the game when proceeding from state <img src="https://latex.codecogs.com/png.latex?s">.</p>
+<p>For a given dice roll <img src="https://latex.codecogs.com/png.latex?d">, define: <img src="https://latex.codecogs.com/png.latex?%0AV_d(s)%20=%0A%5Cbegin%7Bcases%7D%0A%5Cmin%5Climits_%7Ba%20%5Cin%20A_d(s)%7D%20V(s%20%5Csetminus%20a)%20&amp;%20%5Ctext%7Bif%20%7D%20A_d(s)%20%5Cne%20%5Cemptyset,%20%5C%5C%0A%5Csum%5Climits_%7Bi%20%5Cin%20s%7D%20i%20&amp;%20%5Ctext%7Botherwise%7D.%0A%5Cend%7Bcases%7D%0A"></p>
+<p>Then the overall expected cost is: <img src="https://latex.codecogs.com/png.latex?V(s)%20=%20%5Csum_%7Bd=2%7D%5E%7B12%7D%20P(d)%20%5Ccdot%20V_d(s)"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?P(d)"> is the probability of rolling two dice which sum to <img src="https://latex.codecogs.com/png.latex?d">.</p>
+<p>If no valid actions remain, then <img src="https://latex.codecogs.com/png.latex?V(s)"> is equivalent to the final reward: <img src="https://latex.codecogs.com/png.latex?V(s)%20=%20R(s)%20=%20%5Csum_%7Bi%20%5Cin%20s%7D%20i."></p>
+<p>Using dynamic programming, we can compute the expected cost for each state <img src="https://latex.codecogs.com/png.latex?s"> by iterating over all possible states and actions.</p>
+<p>First we create a function to compute the probability of rolling two dice which sum to <img src="https://latex.codecogs.com/png.latex?d">:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1">ddice <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) {</span>
+<span id="cb1-2">  probs <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">36</span></span>
+<span id="cb1-3">  out <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">numeric</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(x))</span>
+<span id="cb1-4">  </span>
+<span id="cb1-5">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Return 0 if the element is not in 2 to 12</span></span>
+<span id="cb1-6">  is_valid <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> x <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> x <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span></span>
+<span id="cb1-7">  out[is_valid] <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> probs[x[is_valid] <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]</span>
+<span id="cb1-8">  </span>
+<span id="cb1-9">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(out)</span>
+<span id="cb1-10">}</span>
+<span id="cb1-11"></span>
+<span id="cb1-12"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ddice</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span>)</span>
+<span id="cb1-13"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  [1] 0.00000000 0.02777778 0.05555556 0.08333333 0.11111111 0.13888889</span></span>
+<span id="cb1-14"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  [7] 0.16666667 0.13888889 0.11111111 0.08333333 0.05555556 0.02777778</span></span></code></pre></div>
+</div>
+<p>Next we create a function to compute the set of valid actions for a given state and dice total:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(purrr)</span>
+<span id="cb2-2"></span>
+<span id="cb2-3">valid_actions <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(s, d) {</span>
+<span id="cb2-4">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (d <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> d <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span>) {</span>
+<span id="cb2-5">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">stop</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Dice total must be between 2 and 12."</span>)</span>
+<span id="cb2-6">  }</span>
+<span id="cb2-7">  </span>
+<span id="cb2-8">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(s) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(s))) {</span>
+<span id="cb2-9">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>)</span>
+<span id="cb2-10">  }</span>
+<span id="cb2-11">  </span>
+<span id="cb2-12">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># The combn function doesn't handle vectors of length 1 as we intended, so</span></span>
+<span id="cb2-13">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># we handle the special case here</span></span>
+<span id="cb2-14">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(s) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>) {</span>
+<span id="cb2-15">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (s <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> d) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">list</span>(s) <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>)</span>
+<span id="cb2-16">  }</span>
+<span id="cb2-17">  </span>
+<span id="cb2-18">  subsets <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(s), <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">combn</span>(s, x, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">simplify =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb2-19">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">flatten</span>()</span>
+<span id="cb2-20">  </span>
+<span id="cb2-21">  valid_subsets <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">keep</span>(subsets, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(x) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> d)</span>
+<span id="cb2-22"></span>
+<span id="cb2-23">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(valid_subsets) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>) {</span>
+<span id="cb2-24">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>)</span>
+<span id="cb2-25">  }</span>
+<span id="cb2-26">  </span>
+<span id="cb2-27">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(valid_subsets)</span>
+<span id="cb2-28">}</span>
+<span id="cb2-29"></span>
+<span id="cb2-30"></span>
+<span id="cb2-31"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">valid_actions</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>)</span>
+<span id="cb2-32"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [[1]]</span></span>
+<span id="cb2-33"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 3 5</span></span>
+<span id="cb2-34"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; </span></span>
+<span id="cb2-35"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [[2]]</span></span>
+<span id="cb2-36"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 1 2 5</span></span>
+<span id="cb2-37"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; </span></span>
+<span id="cb2-38"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [[3]]</span></span>
+<span id="cb2-39"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 1 3 4</span></span></code></pre></div>
+</div>
+<p>We can implement the value function to compute the expected cost of a given state. We use memoisation to speed up the computation:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(memoise)</span>
+<span id="cb3-2"></span>
+<span id="cb3-3">value <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(s) {</span>
+<span id="cb3-4"></span>
+<span id="cb3-5">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># If the state is empty, no cost</span></span>
+<span id="cb3-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(s) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(s))) {</span>
+<span id="cb3-7">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)</span>
+<span id="cb3-8">  }</span>
+<span id="cb3-9"></span>
+<span id="cb3-10">  dice_values <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span></span>
+<span id="cb3-11">  dice_probs <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ddice</span>(dice_values)</span>
+<span id="cb3-12"></span>
+<span id="cb3-13">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># For each dice roll, calculate the min value of next state if valid actions exist</span></span>
+<span id="cb3-14">  expected_costs <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map2_dbl</span>(dice_values, dice_probs, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(d, p) {</span>
+<span id="cb3-15">    actions <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">valid_actions</span>(s, d)</span>
+<span id="cb3-16"></span>
+<span id="cb3-17">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(actions) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(actions))) {</span>
+<span id="cb3-18">      <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># No valid action, the game ends and we incur cost</span></span>
+<span id="cb3-19">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(p <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(s))</span>
+<span id="cb3-20">    }</span>
+<span id="cb3-21"></span>
+<span id="cb3-22">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Otherwise, take the best (minimal) value among next states</span></span>
+<span id="cb3-23">    min_cost <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(actions, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(a) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">setdiff</span>(s, a))) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">min</span>()</span>
+<span id="cb3-24">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(p <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> min_cost)</span>
+<span id="cb3-25">  })</span>
+<span id="cb3-26"></span>
+<span id="cb3-27">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Expected cost is weighted average over all dice outcomes</span></span>
+<span id="cb3-28">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(expected_costs)</span>
+<span id="cb3-29">}</span>
+<span id="cb3-30"></span>
+<span id="cb3-31">value <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">memoise</span>(value)</span>
+<span id="cb3-32"></span>
+<span id="cb3-33"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>)</span>
+<span id="cb3-34"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 6.888889</span></span>
+<span id="cb3-35"></span>
+<span id="cb3-36"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6</span>))</span>
+<span id="cb3-37"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 5.969136</span></span></code></pre></div>
+</div>
+<p>And finally, for a given state and dice total, we can compute the optimal action to take:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">optimal_action <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(s, d) {</span>
+<span id="cb4-2">  actions <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">valid_actions</span>(s, d)</span>
+<span id="cb4-3"></span>
+<span id="cb4-4">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(actions) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(actions))) {</span>
+<span id="cb4-5">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>)</span>
+<span id="cb4-6">  }</span>
+<span id="cb4-7"></span>
+<span id="cb4-8">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Evaluate each possible next state and pick the one with the lowest value</span></span>
+<span id="cb4-9">  values <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(actions, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(a) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">setdiff</span>(s, a)))</span>
+<span id="cb4-10">  best_index <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">which.min</span>(values)</span>
+<span id="cb4-11"></span>
+<span id="cb4-12">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(actions[[best_index]])</span>
+<span id="cb4-13">}</span>
+<span id="cb4-14"></span>
+<span id="cb4-15"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">optimal_action</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>)</span>
+<span id="cb4-16"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 3 5</span></span></code></pre></div>
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>With some help from Copilot we get a function to simulate a game of Shut the Box:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1">simulate_game <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">state =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">9</span>) {</span>
+<span id="cb5-2">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"🎲 Starting a game of Shut the Box!</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Tiles open:"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(state, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-4">  </span>
+<span id="cb5-5">  turn <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span></span>
+<span id="cb5-6">  </span>
+<span id="cb5-7">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">while</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(state) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>) {</span>
+<span id="cb5-8">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(glue<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">glue</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Turn {turn}"</span>))</span>
+<span id="cb5-9">    turn <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> turn <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span></span>
+<span id="cb5-10"></span>
+<span id="cb5-11">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Roll two dice</span></span>
+<span id="cb5-12">    dice_values <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span></span>
+<span id="cb5-13">    d <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sample</span>(dice_values, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">prob =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ddice</span>(dice_values))</span>
+<span id="cb5-14">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">Rolled:"</span>, d, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-15">    </span>
+<span id="cb5-16">    acts <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">valid_actions</span>(state, d)</span>
+<span id="cb5-17">    </span>
+<span id="cb5-18">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(acts) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>) {</span>
+<span id="cb5-19">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"No valid actions! Game over.</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-20">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Tiles left:"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(state, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-21">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(glue<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">glue</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Final score (sum of remaining tiles): {sum(state)}"</span>))</span>
+<span id="cb5-22">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-23">      <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">return</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">invisible</span>(<span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NULL</span>))</span>
+<span id="cb5-24">    }</span>
+<span id="cb5-25">    </span>
+<span id="cb5-26">    a <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">optimal_action</span>(state, d)</span>
+<span id="cb5-27">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Action taken:"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(a, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-28">    </span>
+<span id="cb5-29">    state <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">setdiff</span>(state, a)</span>
+<span id="cb5-30">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Tiles now:"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ifelse</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">length</span>(state) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"(none - you've shut the box!)"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(state, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>)), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-31">  }</span>
+<span id="cb5-32">  </span>
+<span id="cb5-33">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"🏆 Congratulations, you've shut the box!</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-34">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">cat</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Final score: 0</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb5-35">}</span>
+<span id="cb5-36"></span>
+<span id="cb5-37"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">123</span>)</span>
+<span id="cb5-38"></span>
+<span id="cb5-39"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">simulate_game</span>()</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&gt; 🎲 Starting a game of Shut the Box!
+#&gt; Tiles open: {1, 2, 3, 4, 5, 6, 7, 8, 9} 
+#&gt; 
+#&gt; Turn 1
+#&gt; Rolled: 8 
+#&gt; Action taken: {8} 
+#&gt; Tiles now: {1, 2, 3, 4, 5, 6, 7, 9} 
+#&gt; 
+#&gt; Turn 2
+#&gt; Rolled: 10 
+#&gt; Action taken: {1, 9} 
+#&gt; Tiles now: {2, 3, 4, 5, 6, 7} 
+#&gt; 
+#&gt; Turn 3
+#&gt; Rolled: 6 
+#&gt; Action taken: {6} 
+#&gt; Tiles now: {2, 3, 4, 5, 7} 
+#&gt; 
+#&gt; Turn 4
+#&gt; Rolled: 11 
+#&gt; Action taken: {4, 7} 
+#&gt; Tiles now: {2, 3, 5} 
+#&gt; 
+#&gt; Turn 5
+#&gt; Rolled: 3 
+#&gt; Action taken: {3} 
+#&gt; Tiles now: {2, 5} 
+#&gt; 
+#&gt; Turn 6
+#&gt; Rolled: 7 
+#&gt; Action taken: {2, 5} 
+#&gt; Tiles now: (none - you've shut the box!) 
+#&gt; 
+#&gt; 🏆 Congratulations, you've shut the box!
+#&gt; Final score: 0</code></pre>
+</div>
+</div>
+<p>Great news - we won a game using our optimal policy!</p>
+<p>Although we’ve got a way to programatically play the game optimally from each state, it’s still hard to know what the “rule” is without making use of some complicated look-up tables. I wanted to plot something, but the the board can have up to nine numbers open which makes it difficult to picture what’s going on in two or three dimensions.</p>
+<p>To make things easier to understand, we group states by how many tiles remain open. We can then plot the expected cost for each state against the average open tile number:</p>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(dplyr, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">warn.conflicts =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)</span>
+<span id="cb7-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(ggplot2)</span>
+<span id="cb7-3"></span>
+<span id="cb7-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Create a data frame with all possible states and their expected values</span></span>
+<span id="cb7-5">all_states <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">9</span>, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">combn</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">9</span>, x, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">simplify =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb7-6">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">flatten</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb7-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">append</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">list</span>(<span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">after =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)</span>
+<span id="cb7-8"></span>
+<span id="cb7-9">policy_table <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">tibble</span>(</span>
+<span id="cb7-10">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">state =</span> all_states,</span>
+<span id="cb7-11">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">label =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_chr</span>(all_states, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(x, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>)),</span>
+<span id="cb7-12">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">value =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(all_states, value),</span>
+<span id="cb7-13">)</span>
+<span id="cb7-14"></span>
+<span id="cb7-15"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Let's look at a sample of the data</span></span>
+<span id="cb7-16">policy_table <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sample_n</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">10</span>)</span>
+<span id="cb7-17"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; # A tibble: 10 × 3</span></span>
+<span id="cb7-18"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;    state     label           value</span></span>
+<span id="cb7-19"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;    &lt;list&gt;    &lt;chr&gt;           &lt;dbl&gt;</span></span>
+<span id="cb7-20"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  1 &lt;int [5]&gt; {1, 3, 5, 7, 9} 12.3 </span></span>
+<span id="cb7-21"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  2 &lt;int [3]&gt; {4, 7, 8}       14.5 </span></span>
+<span id="cb7-22"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  3 &lt;int [5]&gt; {1, 3, 4, 7, 8} 12.0 </span></span>
+<span id="cb7-23"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  4 &lt;int [4]&gt; {3, 4, 7, 8}    15.2 </span></span>
+<span id="cb7-24"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  5 &lt;int [4]&gt; {4, 5, 6, 9}    18.0 </span></span>
+<span id="cb7-25"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  6 &lt;int [2]&gt; {1, 5}           4.61</span></span>
+<span id="cb7-26"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  7 &lt;int [5]&gt; {3, 5, 6, 8, 9} 22.7 </span></span>
+<span id="cb7-27"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  8 &lt;int [4]&gt; {1, 3, 4, 6}     5.43</span></span>
+<span id="cb7-28"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;  9 &lt;int [3]&gt; {2, 6, 7}        9.86</span></span>
+<span id="cb7-29"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 10 &lt;int [3]&gt; {2, 6, 8}       12.5</span></span>
+<span id="cb7-30"></span>
+<span id="cb7-31">policy_table <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb7-32">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(state)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb7-33">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb7-34">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">state_average =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(state, mean),</span>
+<span id="cb7-35">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">tiles_open =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(state, length)</span>
+<span id="cb7-36">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span> </span>
+<span id="cb7-37">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(state_average, value, tiles_open) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb7-38">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">ggplot</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">aes</span>(state_average, value)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb7-39">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">geom_point</span>() <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb7-40">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">facet_wrap</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">vars</span>(tiles_open), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">nrow =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">labeller =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"label_both"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span></span>
+<span id="cb7-41">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">theme_light</span>()</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://rossbowen.github.io/blog/shut-the-box/index_files/figure-html/unnamed-chunk-6-1.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This definitely shows a pattern! States with higher average open tiles have higher expected costs. The costs are high, indicating some difficulty in shutting any tiles when the board is mostly made up of higher numbers. This supports the idea that we want to target higher numbers first.</p>
+<p>I was curious whether this holds across all states, for all dice rolls. Do we always prioritise the action which shuts the largest number?</p>
+<p>Here’s the instances where we don’t shut the largest number possible:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(tidyr)</span>
+<span id="cb8-2"></span>
+<span id="cb8-3">optimal_actions <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> policy_table <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">expand_grid</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">dice_total =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-5">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb8-6">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">actions =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map2</span>(state, dice_total, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(s, d) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">valid_actions</span>(s, d)),</span>
+<span id="cb8-7">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">optimal_action =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map2</span>(state, dice_total, <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(s, d) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">optimal_action</span>(s, d))</span>
+<span id="cb8-8">  )</span>
+<span id="cb8-9"></span>
+<span id="cb8-10">optimal_actions <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-11">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mutate</span>(</span>
+<span id="cb8-12">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">valid_actions_max_element =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(</span>
+<span id="cb8-13">      actions,</span>
+<span id="cb8-14">      <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(x) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(x))) <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">max</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">unlist</span>(x))</span>
+<span id="cb8-15">    ),</span>
+<span id="cb8-16">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">valid_actions =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_chr</span>(</span>
+<span id="cb8-17">        actions,</span>
+<span id="cb8-18">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(x) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(x))) <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">reduce</span>(</span>
+<span id="cb8-19">            x[<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>], </span>
+<span id="cb8-20">            <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(y, z) <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(y, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"; {"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(z, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>), </span>
+<span id="cb8-21">            <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">.init =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(x[[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]], <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span>)</span>
+<span id="cb8-22">        )</span>
+<span id="cb8-23">    ),</span>
+<span id="cb8-24">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">optimal_action_max_element =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_dbl</span>(</span>
+<span id="cb8-25">      optimal_action,</span>
+<span id="cb8-26">      <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(x) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(x))) <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">max</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">unlist</span>(x))</span>
+<span id="cb8-27">    ),</span>
+<span id="cb8-28">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">optimal_action =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">map_chr</span>(</span>
+<span id="cb8-29">      optimal_action,</span>
+<span id="cb8-30">      <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(x) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">||</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">all</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.na</span>(x))) <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste0</span>(</span>
+<span id="cb8-31">        <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"{"</span>, <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">paste</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">unlist</span>(x), <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">collapse =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">", "</span>), <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"}"</span></span>
+<span id="cb8-32">      )</span>
+<span id="cb8-33">    ),</span>
+<span id="cb8-34">  ) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-35">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">filter</span>(valid_actions_max_element <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!=</span> optimal_action_max_element) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-36">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">state =</span> label, dice_total, valid_actions, optimal_action) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb8-37">  DT<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">datatable</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">rownames =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-ffc4f25ab85bf888dc62" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-ffc4f25ab85bf888dc62">{"x":{"filter":"none","vertical":false,"data":[["{1, 2, 3, 4}","{1, 2, 4, 5}","{1, 2, 5, 6}","{1, 2, 6, 7}","{1, 3, 4, 6}","{1, 3, 5, 7}","{1, 3, 6, 8}","{1, 4, 5, 8}","{2, 3, 4, 5}","{2, 3, 5, 6}","{2, 3, 6, 7}","{2, 4, 5, 7}","{3, 4, 5, 6}","{3, 4, 6, 7}","{4, 5, 6, 7}","{1, 2, 3, 4, 5}","{1, 2, 3, 4, 6}","{1, 2, 3, 4, 6}","{1, 2, 3, 4, 7}","{1, 2, 3, 4, 8}","{1, 2, 3, 4, 9}","{1, 2, 3, 5, 6}","{1, 2, 3, 5, 6}","{1, 2, 3, 5, 6}","{1, 2, 3, 5, 7}","{1, 2, 3, 6, 7}","{1, 2, 4, 5, 6}","{1, 2, 4, 5, 7}","{1, 2, 4, 5, 7}","{1, 2, 4, 5, 7}","{1, 2, 4, 5, 8}","{1, 2, 4, 5, 8}","{1, 2, 4, 5, 9}","{1, 2, 4, 6, 7}","{1, 2, 4, 6, 7}","{1, 2, 4, 6, 7}","{1, 2, 4, 7, 8}","{1, 2, 4, 8, 9}","{1, 2, 5, 6, 8}","{1, 2, 5, 6, 8}","{1, 2, 5, 6, 9}","{1, 2, 5, 7, 8}","{1, 2, 5, 7, 9}","{1, 2, 6, 7, 9}","{1, 2, 6, 8, 9}","{1, 3, 4, 5, 6}","{1, 3, 4, 5, 6}","{1, 3, 4, 6, 8}","{1, 3, 4, 6, 9}","{1, 3, 5, 6, 7}","{1, 3, 5, 7, 8}","{1, 3, 5, 7, 9}","{1, 4, 5, 6, 7}","{1, 4, 6, 7, 9}","{2, 3, 4, 5, 6}","{2, 3, 4, 5, 6}","{2, 3, 4, 5, 8}","{2, 3, 4, 5, 9}","{2, 3, 4, 6, 7}","{2, 3, 4, 6, 7}","{2, 3, 4, 7, 8}","{2, 3, 5, 6, 7}","{2, 3, 5, 6, 9}","{2, 3, 5, 8, 9}","{2, 3, 6, 7, 8}","{2, 3, 7, 8, 9}","{2, 4, 5, 6, 7}","{2, 4, 5, 7, 8}","{2, 4, 5, 7, 8}","{2, 4, 6, 7, 8}","{2, 4, 6, 8, 9}","{2, 5, 6, 8, 9}","{3, 4, 5, 6, 7}","{3, 4, 5, 6, 7}","{3, 4, 5, 6, 8}","{3, 4, 6, 7, 8}","{3, 4, 6, 7, 9}","{3, 4, 7, 8, 9}","{3, 5, 6, 7, 8}","{3, 5, 6, 8, 9}","{4, 5, 6, 7, 8}","{4, 5, 6, 7, 9}","{1, 2, 3, 4, 5, 6}","{1, 2, 3, 4, 5, 6}","{1, 2, 3, 4, 5, 7}","{1, 2, 3, 4, 5, 7}","{1, 2, 3, 4, 5, 8}","{1, 2, 3, 4, 5, 9}","{1, 2, 3, 4, 5, 9}","{1, 2, 3, 4, 6, 7}","{1, 2, 3, 4, 6, 8}","{1, 2, 3, 4, 6, 9}","{1, 2, 3, 4, 6, 9}","{1, 2, 3, 4, 7, 8}","{1, 2, 3, 4, 7, 9}","{1, 2, 3, 4, 8, 9}","{1, 2, 3, 5, 6, 7}","{1, 2, 3, 5, 6, 7}","{1, 2, 3, 5, 6, 8}","{1, 2, 3, 5, 6, 9}","{1, 2, 3, 5, 7, 8}","{1, 2, 3, 5, 7, 9}","{1, 2, 3, 5, 8, 9}","{1, 2, 3, 5, 8, 9}","{1, 2, 3, 6, 7, 9}","{1, 2, 4, 5, 6, 7}","{1, 2, 4, 5, 6, 7}","{1, 2, 4, 5, 6, 8}","{1, 2, 4, 5, 6, 8}","{1, 2, 4, 5, 6, 9}","{1, 2, 4, 5, 7, 8}","{1, 2, 4, 5, 7, 8}","{1, 2, 4, 5, 7, 9}","{1, 2, 4, 5, 7, 9}","{1, 2, 4, 5, 8, 9}","{1, 2, 4, 6, 7, 8}","{1, 2, 4, 6, 7, 8}","{1, 2, 4, 6, 7, 9}","{1, 2, 4, 6, 7, 9}","{1, 2, 4, 6, 8, 9}","{1, 2, 4, 6, 8, 9}","{1, 2, 4, 7, 8, 9}","{1, 2, 5, 6, 7, 8}","{1, 2, 5, 6, 7, 9}","{1, 2, 5, 6, 7, 9}","{1, 2, 5, 6, 7, 9}","{1, 2, 5, 6, 8, 9}","{1, 2, 5, 7, 8, 9}","{1, 2, 5, 7, 8, 9}","{1, 3, 4, 5, 6, 7}","{1, 3, 4, 5, 6, 8}","{1, 3, 4, 5, 6, 9}","{1, 3, 4, 5, 7, 9}","{1, 3, 4, 5, 8, 9}","{1, 3, 4, 6, 7, 8}","{1, 3, 4, 6, 7, 9}","{1, 3, 4, 6, 8, 9}","{1, 3, 4, 7, 8, 9}","{1, 3, 5, 6, 7, 8}","{1, 3, 5, 6, 7, 8}","{1, 3, 5, 6, 7, 9}","{1, 3, 5, 6, 7, 9}","{1, 4, 5, 6, 7, 8}","{1, 4, 5, 6, 7, 9}","{2, 3, 4, 5, 6, 7}","{2, 3, 4, 5, 6, 9}","{2, 3, 4, 5, 6, 9}","{2, 3, 4, 5, 7, 8}","{2, 3, 4, 5, 7, 8}","{2, 3, 4, 5, 7, 8}","{2, 3, 4, 5, 8, 9}","{2, 3, 4, 6, 7, 8}","{2, 3, 4, 6, 8, 9}","{2, 3, 4, 7, 8, 9}","{2, 3, 5, 6, 7, 8}","{2, 3, 5, 6, 8, 9}","{2, 3, 6, 7, 8, 9}","{2, 4, 5, 6, 7, 8}","{2, 4, 5, 6, 8, 9}","{2, 4, 5, 7, 8, 9}","{3, 4, 5, 6, 7, 8}","{3, 4, 5, 6, 7, 9}","{3, 4, 5, 6, 8, 9}","{3, 4, 6, 7, 8, 9}","{3, 5, 6, 7, 8, 9}","{4, 5, 6, 7, 8, 9}","{1, 2, 3, 4, 5, 6, 7}","{1, 2, 3, 4, 5, 6, 9}","{1, 2, 3, 4, 5, 7, 9}","{1, 2, 3, 4, 5, 7, 9}","{1, 2, 3, 4, 5, 8, 9}","{1, 2, 3, 4, 6, 7, 9}","{1, 2, 3, 4, 6, 8, 9}","{1, 2, 3, 4, 7, 8, 9}","{1, 2, 3, 5, 6, 7, 8}","{1, 2, 3, 5, 6, 7, 8}","{1, 2, 3, 5, 6, 7, 9}","{1, 2, 3, 5, 6, 8, 9}","{1, 2, 3, 5, 6, 8, 9}","{1, 2, 3, 5, 7, 8, 9}","{1, 2, 4, 5, 6, 7, 8}","{1, 2, 4, 5, 6, 7, 8}","{1, 2, 4, 5, 6, 7, 9}","{1, 2, 4, 5, 6, 8, 9}","{1, 2, 4, 5, 7, 8, 9}","{1, 2, 4, 6, 7, 8, 9}","{1, 2, 4, 6, 7, 8, 9}","{1, 2, 5, 6, 7, 8, 9}","{1, 3, 4, 5, 6, 7, 8}","{1, 3, 4, 5, 6, 8, 9}","{1, 3, 4, 5, 6, 8, 9}","{1, 3, 4, 5, 7, 8, 9}","{1, 3, 5, 6, 7, 8, 9}","{1, 4, 5, 6, 7, 8, 9}","{2, 3, 4, 5, 6, 7, 8}","{2, 3, 4, 5, 6, 7, 8}","{2, 3, 4, 5, 6, 7, 9}","{2, 3, 4, 5, 7, 8, 9}","{2, 3, 4, 6, 7, 8, 9}","{2, 3, 4, 6, 7, 8, 9}","{3, 4, 5, 6, 7, 8, 9}","{1, 2, 3, 4, 6, 7, 8, 9}","{1, 2, 3, 5, 6, 7, 8, 9}","{1, 2, 4, 5, 6, 7, 8, 9}","{1, 3, 4, 5, 6, 7, 8, 9}"],[5,6,7,8,7,8,9,9,7,8,9,9,9,10,11,7,5,7,5,5,5,7,8,10,8,11,9,6,9,10,6,11,6,8,10,12,11,12,7,11,7,9,12,8,10,9,12,7,7,11,12,8,11,10,7,12,7,7,10,12,10,8,8,11,9,10,9,9,12,10,10,11,9,10,9,10,10,11,11,11,11,11,8,12,6,9,7,6,7,9,5,5,7,10,5,11,8,11,7,8,12,10,10,11,8,10,11,10,11,7,11,12,6,12,12,9,11,8,12,10,12,12,11,8,11,12,12,10,12,10,7,7,8,12,11,10,7,12,11,12,8,11,12,11,8,7,8,9,10,12,7,10,12,10,9,11,10,11,10,12,9,10,11,10,11,11,9,8,6,8,7,5,5,11,11,12,8,7,10,10,11,12,12,12,12,10,12,12,10,7,11,12,12,12,11,12,8,10,10,12,10,5,10,12,12],["{1, 4}; {2, 3}","{1, 5}; {2, 4}","{1, 6}; {2, 5}","{1, 7}; {2, 6}","{1, 6}; {3, 4}","{1, 7}; {3, 5}","{1, 8}; {3, 6}","{1, 8}; {4, 5}","{2, 5}; {3, 4}","{2, 6}; {3, 5}","{2, 7}; {3, 6}","{2, 7}; {4, 5}","{3, 6}; {4, 5}","{3, 7}; {4, 6}","{4, 7}; {5, 6}","{2, 5}; {3, 4}; {1, 2, 4}","{1, 4}; {2, 3}","{1, 6}; {3, 4}; {1, 2, 4}","{1, 4}; {2, 3}","{1, 4}; {2, 3}","{1, 4}; {2, 3}","{1, 6}; {2, 5}","{2, 6}; {3, 5}; {1, 2, 5}","{1, 3, 6}; {2, 3, 5}","{1, 7}; {3, 5}; {1, 2, 5}","{1, 3, 7}; {2, 3, 6}","{4, 5}; {1, 2, 6}","{1, 5}; {2, 4}","{2, 7}; {4, 5}","{1, 2, 7}; {1, 4, 5}","{1, 5}; {2, 4}","{1, 2, 8}; {2, 4, 5}","{1, 5}; {2, 4}","{1, 7}; {2, 6}","{4, 6}; {1, 2, 7}","{1, 4, 7}; {2, 4, 6}","{4, 7}; {1, 2, 8}","{4, 8}; {1, 2, 9}","{1, 6}; {2, 5}","{5, 6}; {1, 2, 8}","{1, 6}; {2, 5}","{1, 8}; {2, 7}","{5, 7}; {1, 2, 9}","{1, 7}; {2, 6}","{1, 9}; {2, 8}","{3, 6}; {4, 5}; {1, 3, 5}","{1, 5, 6}; {3, 4, 5}","{1, 6}; {3, 4}","{1, 6}; {3, 4}","{5, 6}; {1, 3, 7}","{5, 7}; {1, 3, 8}","{1, 7}; {3, 5}","{4, 7}; {5, 6}; {1, 4, 6}","{1, 9}; {4, 6}","{2, 5}; {3, 4}","{2, 4, 6}; {3, 4, 5}","{2, 5}; {3, 4}","{2, 5}; {3, 4}","{3, 7}; {4, 6}","{2, 3, 7}; {2, 4, 6}","{2, 8}; {3, 7}","{2, 6}; {3, 5}","{2, 6}; {3, 5}","{2, 9}; {3, 8}","{2, 7}; {3, 6}","{2, 8}; {3, 7}","{2, 7}; {4, 5}","{2, 7}; {4, 5}","{4, 8}; {5, 7}","{2, 8}; {4, 6}","{2, 8}; {4, 6}","{2, 9}; {5, 6}","{3, 6}; {4, 5}","{3, 7}; {4, 6}","{3, 6}; {4, 5}","{3, 7}; {4, 6}","{3, 7}; {4, 6}","{3, 8}; {4, 7}","{3, 8}; {5, 6}","{3, 8}; {5, 6}","{4, 7}; {5, 6}","{4, 7}; {5, 6}","{2, 6}; {3, 5}; {1, 2, 5}; {1, 3, 4}","{1, 5, 6}; {2, 4, 6}; {3, 4, 5}; {1, 2, 3, 6}; {1, 2, 4, 5}","{1, 5}; {2, 4}; {1, 2, 3}","{2, 7}; {4, 5}; {1, 3, 5}; {2, 3, 4}","{2, 5}; {3, 4}; {1, 2, 4}","{1, 5}; {2, 4}; {1, 2, 3}","{2, 5}; {3, 4}; {1, 2, 4}","{2, 7}; {3, 6}; {1, 2, 6}; {2, 3, 4}","{1, 4}; {2, 3}","{1, 4}; {2, 3}","{1, 6}; {3, 4}; {1, 2, 4}","{2, 8}; {3, 7}; {1, 2, 7}; {1, 2, 3, 4}","{1, 4}; {2, 3}","{2, 9}; {3, 8}; {1, 2, 8}","{1, 7}; {2, 6}; {3, 5}; {1, 2, 5}","{5, 6}; {1, 3, 7}; {2, 3, 6}; {1, 2, 3, 5}","{1, 6}; {2, 5}","{2, 6}; {3, 5}; {1, 2, 5}","{5, 7}; {1, 3, 8}; {2, 3, 7}","{1, 9}; {3, 7}; {1, 2, 7}; {2, 3, 5}","{1, 9}; {2, 8}; {2, 3, 5}","{2, 9}; {3, 8}; {1, 2, 8}; {1, 2, 3, 5}","{1, 7}; {2, 6}","{4, 6}; {1, 2, 7}; {1, 4, 5}","{4, 7}; {5, 6}; {1, 4, 6}; {2, 4, 5}","{2, 8}; {4, 6}; {1, 4, 5}","{5, 6}; {1, 2, 8}; {1, 4, 6}; {2, 4, 5}","{1, 6}; {2, 5}; {1, 2, 4}","{4, 7}; {1, 2, 8}; {2, 4, 5}","{4, 8}; {5, 7}; {1, 4, 7}; {1, 2, 4, 5}","{1, 5}; {2, 4}","{5, 7}; {1, 2, 9}; {1, 4, 7}; {1, 2, 4, 5}","{4, 8}; {1, 2, 9}; {1, 2, 4, 5}","{1, 8}; {2, 7}; {1, 2, 6}","{4, 7}; {1, 2, 8}; {1, 4, 6}","{1, 7}; {2, 6}","{1, 2, 9}; {1, 4, 7}; {2, 4, 6}","{1, 9}; {2, 8}; {4, 6}","{4, 8}; {1, 2, 9}; {2, 4, 6}","{4, 8}; {1, 2, 9}; {1, 4, 7}","{5, 6}; {1, 2, 8}","{1, 7}; {2, 6}; {1, 2, 5}","{2, 9}; {5, 6}","{5, 7}; {1, 2, 9}; {1, 5, 6}","{1, 2, 9}; {1, 5, 6}","{1, 9}; {2, 8}; {1, 2, 7}","{5, 7}; {1, 2, 9}","{3, 7}; {4, 6}; {1, 3, 6}; {1, 4, 5}","{1, 6}; {3, 4}","{1, 6}; {3, 4}","{1, 7}; {3, 5}; {1, 3, 4}","{3, 9}; {4, 8}; {1, 3, 8}; {3, 4, 5}","{3, 8}; {4, 7}; {1, 3, 7}; {1, 4, 6}","{1, 9}; {3, 7}; {4, 6}; {1, 3, 6}","{1, 6}; {3, 4}","{3, 9}; {4, 8}; {1, 3, 8}; {1, 4, 7}","{3, 8}; {5, 6}; {1, 3, 7}","{5, 7}; {1, 3, 8}; {1, 5, 6}","{1, 7}; {3, 5}","{5, 6}; {1, 3, 7}","{4, 8}; {5, 7}; {1, 4, 7}; {1, 5, 6}","{4, 7}; {5, 6}; {1, 4, 6}","{2, 6}; {3, 5}","{2, 5}; {3, 4}","{2, 6}; {3, 5}","{2, 7}; {4, 5}; {2, 3, 4}","{2, 8}; {3, 7}; {2, 3, 5}","{4, 8}; {5, 7}; {2, 3, 7}; {3, 4, 5}","{2, 5}; {3, 4}","{2, 8}; {3, 7}; {4, 6}","{3, 9}; {4, 8}; {2, 4, 6}","{2, 8}; {3, 7}","{2, 7}; {3, 6}","{2, 9}; {3, 8}; {5, 6}; {2, 3, 6}","{2, 8}; {3, 7}","{4, 7}; {5, 6}; {2, 4, 5}","{2, 8}; {4, 6}","{4, 8}; {5, 7}","{3, 6}; {4, 5}","{3, 7}; {4, 6}","{3, 8}; {5, 6}","{3, 7}; {4, 6}","{3, 8}; {5, 6}","{4, 7}; {5, 6}","{2, 7}; {3, 6}; {4, 5}; {1, 2, 6}; {1, 3, 5}; {2, 3, 4}","{2, 6}; {3, 5}; {1, 2, 5}; {1, 3, 4}","{1, 5}; {2, 4}; {1, 2, 3}","{1, 7}; {3, 5}; {1, 2, 5}; {1, 3, 4}","{2, 5}; {3, 4}; {1, 2, 4}","{1, 4}; {2, 3}","{1, 4}; {2, 3}","{2, 9}; {3, 8}; {4, 7}; {1, 2, 8}; {1, 3, 7}","{3, 8}; {5, 6}; {1, 2, 8}; {1, 3, 7}; {2, 3, 6}; {1, 2, 3, 5}","{5, 7}; {1, 3, 8}; {1, 5, 6}; {2, 3, 7}; {1, 2, 3, 6}","{1, 7}; {2, 6}; {3, 5}; {1, 2, 5}","{1, 6}; {2, 5}","{1, 9}; {2, 8}; {1, 3, 6}; {2, 3, 5}","{1, 9}; {2, 8}; {3, 7}; {1, 2, 7}; {2, 3, 5}","{4, 7}; {5, 6}; {1, 2, 8}; {1, 4, 6}; {2, 4, 5}","{4, 8}; {5, 7}; {1, 4, 7}; {1, 5, 6}; {2, 4, 6}; {1, 2, 4, 5}","{5, 7}; {1, 2, 9}; {1, 4, 7}; {1, 5, 6}; {2, 4, 6}; {1, 2, 4, 5}","{4, 8}; {1, 2, 9}; {1, 5, 6}; {2, 4, 6}; {1, 2, 4, 5}","{4, 8}; {5, 7}; {1, 2, 9}; {1, 4, 7}; {1, 2, 4, 5}","{1, 9}; {2, 8}; {4, 6}; {1, 2, 7}","{4, 8}; {1, 2, 9}; {1, 4, 7}; {2, 4, 6}","{5, 7}; {1, 2, 9}; {1, 5, 6}","{3, 7}; {4, 6}; {1, 3, 6}; {1, 4, 5}","{1, 6}; {3, 4}","{3, 8}; {5, 6}; {1, 4, 6}","{3, 9}; {4, 8}; {5, 7}; {1, 3, 8}; {1, 4, 7}; {3, 4, 5}","{3, 9}; {5, 7}; {1, 3, 8}; {1, 5, 6}","{4, 8}; {5, 7}; {1, 4, 7}; {1, 5, 6}","{3, 8}; {4, 7}; {5, 6}; {2, 3, 6}; {2, 4, 5}","{4, 8}; {5, 7}; {2, 3, 7}; {2, 4, 6}; {3, 4, 5}","{2, 6}; {3, 5}","{2, 8}; {3, 7}; {2, 3, 5}","{2, 8}; {3, 7}; {4, 6}","{3, 9}; {4, 8}; {2, 3, 7}; {2, 4, 6}","{3, 7}; {4, 6}","{1, 4}; {2, 3}","{1, 9}; {2, 8}; {3, 7}; {1, 2, 7}; {1, 3, 6}; {2, 3, 5}","{4, 8}; {5, 7}; {1, 2, 9}; {1, 4, 7}; {1, 5, 6}; {2, 4, 6}; {1, 2, 4, 5}","{3, 9}; {4, 8}; {5, 7}; {1, 3, 8}; {1, 4, 7}; {1, 5, 6}; {3, 4, 5}"],["{2, 3}","{2, 4}","{2, 5}","{2, 6}","{3, 4}","{3, 5}","{3, 6}","{4, 5}","{3, 4}","{3, 5}","{3, 6}","{4, 5}","{4, 5}","{4, 6}","{5, 6}","{3, 4}","{2, 3}","{3, 4}","{2, 3}","{2, 3}","{2, 3}","{2, 5}","{3, 5}","{2, 3, 5}","{3, 5}","{2, 3, 6}","{4, 5}","{2, 4}","{4, 5}","{1, 4, 5}","{2, 4}","{2, 4, 5}","{2, 4}","{2, 6}","{4, 6}","{2, 4, 6}","{4, 7}","{4, 8}","{2, 5}","{5, 6}","{2, 5}","{2, 7}","{5, 7}","{2, 6}","{2, 8}","{4, 5}","{3, 4, 5}","{3, 4}","{3, 4}","{5, 6}","{5, 7}","{3, 5}","{5, 6}","{4, 6}","{3, 4}","{3, 4, 5}","{3, 4}","{3, 4}","{4, 6}","{2, 4, 6}","{3, 7}","{3, 5}","{3, 5}","{3, 8}","{3, 6}","{3, 7}","{4, 5}","{4, 5}","{5, 7}","{4, 6}","{4, 6}","{5, 6}","{4, 5}","{4, 6}","{4, 5}","{4, 6}","{4, 6}","{4, 7}","{5, 6}","{5, 6}","{5, 6}","{5, 6}","{3, 5}","{3, 4, 5}","{2, 4}","{4, 5}","{3, 4}","{2, 4}","{3, 4}","{3, 6}","{2, 3}","{2, 3}","{3, 4}","{3, 7}","{2, 3}","{3, 8}","{2, 6}","{5, 6}","{2, 5}","{3, 5}","{5, 7}","{3, 7}","{2, 8}","{3, 8}","{2, 6}","{4, 6}","{5, 6}","{4, 6}","{5, 6}","{2, 5}","{4, 7}","{5, 7}","{2, 4}","{5, 7}","{4, 8}","{2, 7}","{4, 7}","{2, 6}","{2, 4, 6}","{2, 8}","{4, 8}","{4, 8}","{5, 6}","{2, 6}","{5, 6}","{5, 7}","{1, 5, 6}","{2, 8}","{5, 7}","{4, 6}","{3, 4}","{3, 4}","{3, 5}","{4, 8}","{4, 7}","{4, 6}","{3, 4}","{4, 8}","{5, 6}","{5, 7}","{3, 5}","{5, 6}","{5, 7}","{5, 6}","{3, 5}","{3, 4}","{3, 5}","{4, 5}","{3, 7}","{5, 7}","{3, 4}","{4, 6}","{4, 8}","{3, 7}","{3, 6}","{3, 8}","{3, 7}","{5, 6}","{4, 6}","{5, 7}","{4, 5}","{4, 6}","{5, 6}","{4, 6}","{5, 6}","{5, 6}","{3, 6}","{3, 5}","{2, 4}","{3, 5}","{3, 4}","{2, 3}","{2, 3}","{3, 8}","{5, 6}","{5, 7}","{2, 6}","{2, 5}","{2, 8}","{2, 8}","{5, 6}","{5, 7}","{5, 7}","{4, 8}","{4, 8}","{2, 8}","{4, 8}","{5, 7}","{4, 6}","{3, 4}","{5, 6}","{4, 8}","{5, 7}","{5, 7}","{5, 6}","{5, 7}","{3, 5}","{3, 7}","{4, 6}","{4, 8}","{4, 6}","{2, 3}","{2, 8}","{5, 7}","{4, 8}"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>state<\/th>\n      <th>dice_total<\/th>\n      <th>valid_actions<\/th>\n      <th>optimal_action<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":1},{"name":"state","targets":0},{"name":"dice_total","targets":1},{"name":"valid_actions","targets":2},{"name":"optimal_action","targets":3}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<style>
+  .datatables {
+    margin-bottom: 1rem;
+  }
+</style>
+<p>I found myself staring at this for a while, particularly at the results for state <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%204,%205,%208%5C%7D"> given a dice roll of 9. In this scenario we can choose to close <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D"> or <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D">. Our computations suggest closing <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D">.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>))</span>
+<span id="cb9-2"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 6.888889</span></span>
+<span id="cb9-3"></span>
+<span id="cb9-4"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">value</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span>))</span>
+<span id="cb9-5"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; [1] 7.027778</span></span></code></pre></div>
+</div>
+<p>At first, this result felt counterintuitive — I had expected that winning (shutting all tiles) from the state <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D"> would be more likely than from <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D">, and so this would give <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D"> a lower expected cost.</p>
+<p>From the state <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D">, we can only proceed if we roll a 4, 5, or 9. Any other dice roll results in an immediate loss:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Balign%7D%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B4,%205%5C%7D)%20&amp;=%20P(%5Ctext%7BRoll%204%20and%20win%20from%20%7D%20%5C%7B5%5C%7D)%20%5C%5C%0A&amp;+%20P(%5Ctext%7BRoll%205%20and%20win%20from%20%7D%20%5C%7B4%5C%7D)%20%5C%5C%0A&amp;+%20P(%5Ctext%7BRoll%209%7D)%0A%5Cend%7Balign%7D%0A"></p>
+<p>We observe that:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B4%5C%7D)%20=%20P(%5Ctext%7BRoll%20%7D%204)%20=%20%5Cfrac%7B3%7D%7B36%7D,%0A"></p>
+<p>and</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B5%5C%7D)%20=%20P(%5Ctext%7BRoll%20%7D%205)%20=%20%5Cfrac%7B4%7D%7B36%7D.%0A"></p>
+<p>Combining these, we compute:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B4,%205%5C%7D)%20=%20%5Cfrac%7B3%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B3%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B4%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Capprox%200.13.%0A"></p>
+<p>The probability of winning from <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D"> is the same as rolling a 9 (as that’s the only winning action), which is <img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B4%7D%7B36%7D%20%5Capprox%200.11">. So it’s true – we’re slightly more likely to win the game from the state <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D">. But our value function isn’t set up to maximise our probability of winning, it’s set up to minimise our expected cost.</p>
+<p>The possibility of scoring 1 from state <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D"> by rolling an 8 pulls the expected cost down, making it the better state to land on. The objectives of maximising winning chances and minimising expected costs diverge slightly!</p>
+<p>So we’ve not managed to come up with a “rule” for people to follow, but it seems like we can do pretty well by closing fewer tiles, and prioritising closing higher numbers.</p>
+<p>Finally, to wrap up, what is the state with the highest expected cost?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1">policy_table <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb10-2">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">arrange</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">desc</span>(value)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb10-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span>(label, value) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">|&gt;</span></span>
+<span id="cb10-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">head</span>()</span>
+<span id="cb10-5"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb10-6"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;   label              value</span></span>
+<span id="cb10-7"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt;   &lt;chr&gt;              &lt;dbl&gt;</span></span>
+<span id="cb10-8"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 1 {5, 6, 7, 8, 9}     24.7</span></span>
+<span id="cb10-9"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 2 {4, 5, 7, 8, 9}     23.8</span></span>
+<span id="cb10-10"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 3 {6, 7, 8, 9}        23.6</span></span>
+<span id="cb10-11"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 4 {4, 5, 6, 7, 8, 9}  23.2</span></span>
+<span id="cb10-12"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 5 {5, 7, 8, 9}        22.7</span></span>
+<span id="cb10-13"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&gt; 6 {4, 6, 7, 8, 9}     22.7</span></span></code></pre></div>
+</div>
+<p>Turns out my original plan wasn’t just inoptimal, but the game state where 1, 2, 3 and 4 have all been shut has the highest expected cost. It’s the worst possible strategy!</p>
+
+
+</section>
+
+ ]]></description>
+  <guid>https://rossbowen.github.io/blog/shut-the-box/</guid>
+  <pubDate>Sat, 10 May 2025 23:00:00 GMT</pubDate>
+</item>
 <item>
   <title>QUALIFY in SQL</title>
   <link>https://rossbowen.github.io/blog/qualify-in-sql/</link>
