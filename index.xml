@@ -9,12 +9,13 @@
 <link>https://rossbowen.github.io/</link>
 <atom:link href="https://rossbowen.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description></description>
-<generator>quarto-1.6.42</generator>
+<generator>quarto-1.7.34</generator>
 <lastBuildDate>Sat, 10 May 2025 23:00:00 GMT</lastBuildDate>
 <item>
   <title>Shut the box!</title>
   <link>https://rossbowen.github.io/blog/shut-the-box/</link>
   <description><![CDATA[ 
+
 
 
 
@@ -1417,7 +1418,7 @@ font-style: inherit;">#&gt; [1] 7.027778</span></span></code></pre></div>
 <p>and</p>
 <p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B5%5C%7D)%20=%20P(%5Ctext%7BRoll%20%7D%205)%20=%20%5Cfrac%7B4%7D%7B36%7D.%0A"></p>
 <p>Combining these, we compute:</p>
-<p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B4,%205%5C%7D)%20=%20%5Cfrac%7B3%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B3%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B4%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Capprox%200.13.%0A"></p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AP(%5Ctext%7BWin%20from%20%7D%20%5C%7B4,%205%5C%7D)%20=%20%5Cfrac%7B3%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B4%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Ccdot%20%5Cfrac%7B3%7D%7B36%7D%20+%20%5Cfrac%7B4%7D%7B36%7D%20%5Capprox%200.13.%0A"></p>
 <p>The probability of winning from <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D"> is the same as rolling a 9 (as that’s the only winning action), which is <img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B4%7D%7B36%7D%20%5Capprox%200.11">. So it’s true – we’re slightly more likely to win the game from the state <img src="https://latex.codecogs.com/png.latex?%5C%7B4,%205%5C%7D">. But our value function isn’t set up to maximise our probability of winning, it’s set up to minimise our expected cost.</p>
 <p>The possibility of scoring 1 from state <img src="https://latex.codecogs.com/png.latex?%5C%7B1,%208%5C%7D"> by rolling an 8 pulls the expected cost down, making it the better state to land on. The objectives of maximising winning chances and minimising expected costs diverge slightly!</p>
 <p>So we’ve not managed to come up with a “rule” for people to follow, but it seems like we can do pretty well by closing fewer tiles, and prioritising closing higher numbers.</p>
@@ -1482,6 +1483,7 @@ font-style: inherit;">#&gt; 6 {4, 6, 7, 8, 9}     22.7</span></span></code></pre
   <title>QUALIFY in SQL</title>
   <link>https://rossbowen.github.io/blog/qualify-in-sql/</link>
   <description><![CDATA[ 
+
 
 
 
@@ -1651,6 +1653,7 @@ font-style: inherit;">1</span>;</span></code></pre></div>
   <title>My ideal open data API</title>
   <link>https://rossbowen.github.io/blog/my-ideal-data-api/</link>
   <description><![CDATA[ 
+
 
 
 
@@ -2004,8 +2007,8 @@ font-style: inherit;"># ℹ Use `print(n = ...)` to see more rows</span></span><
     A --&gt; C[Edition: GDP August]
     C --&gt; H[Version: GDP August v1]
     A --&gt; D[Edition: GDP September]
-    D --&gt; E[Version: GDP September v1]
-    D --&gt; F[Version: GDP September v2]
+    D --&gt; E[Version: GDP Sept v1]
+    D --&gt; F[Version: GDP Sept v2]
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -2976,6 +2979,7 @@ font-style: inherit;">}</span></span></code></pre></div>
   <title>Exploring expert systems</title>
   <link>https://rossbowen.github.io/blog/exploring-expert-systems/</link>
   <description><![CDATA[ 
+
 
 
 
@@ -4048,6 +4052,7 @@ font-style: inherit;">#&gt; 4         1         1           0.310             0.
 
 
 
+
 <p>When <a href="../../blog/confidence-intervals-in-the-wild">writing about confidence intervals</a> I came across <a href="https://bayes.wustl.edu/etj/articles/confidence.pdf">this 1974 paper</a> by E. T. Jaynes which had a nice problem about estimating the minimum lifetime of some machinery.</p>
 <blockquote class="blockquote">
 <p>EXAMPLE 5. TRUNCATED EXPONENTIAL DISTRIBUTION</p>
@@ -4883,6 +4888,7 @@ font-style: inherit;">#&gt; 2 TRUE                         35961 0.899</span></s
   <title>Confidence intervals in the wild</title>
   <link>https://rossbowen.github.io/blog/confidence-intervals-in-the-wild/</link>
   <description><![CDATA[ 
+
 
 
 
