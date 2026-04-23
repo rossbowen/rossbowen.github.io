@@ -359,7 +359,7 @@ $$
 Combining these, we compute:
 
 $$
-P(\text{Win from } \{4, 5\}) = \frac{3}{36} \cdot \frac{3}{36} + \frac{4}{36} \cdot \frac{4}{36} + \frac{4}{36} \approx 0.13.
+P(\text{Win from } \{4, 5\}) = \frac{3}{36} \cdot \frac{4}{36} + \frac{4}{36} \cdot \frac{3}{36} + \frac{4}{36} \approx 0.13.
 $$
 
 

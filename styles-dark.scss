@@ -1,0 +1,338 @@
+/*-- scss:defaults --*/
+
+$font-family-sans-serif: "Inter", system-ui, -apple-system, sans-serif;
+$font-family-monospace:  "Fira Code", monospace;
+$headings-font-family:   "Space Grotesk", sans-serif;
+
+$primary:          #ff4d6d;
+$secondary:        #7c3aed;
+$success:          #10b981;
+$info:             #06b6d4;
+
+$body-bg:          #0d0d14;
+$body-color:       #dcdce8;
+$headings-color:   #ffffff;
+$link-color:       #ff4d6d;
+$link-hover-color: #ff8fa3;
+
+$navbar-dark-color:        rgba(220, 220, 232, 0.6);
+$navbar-dark-hover-color:  #ff4d6d;
+$navbar-dark-active-color: #ff4d6d;
+$navbar-bg:                #0d0d14;
+
+$border-color:     rgba(255, 255, 255, 0.08);
+$code-bg:          #1a1a2e;
+$code-color:       #a78bfa;
+
+/*-- scss:rules --*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+
+// ── Navbar ────────────────────────────────────────────────────────────────────
+
+.navbar {
+  background: rgba(13, 13, 20, 0.92) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 0.75rem 2rem;
+}
+
+.navbar-brand {
+  font-family: $headings-font-family;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: #ffffff !important;
+}
+
+// ── Collapse empty Quarto title block ─────────────────────────────────────────
+
+#quarto-content main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+#title-block-header.quarto-title-block:empty {
+  display: none;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+.hero-section {
+  display: grid;
+  place-items: center;
+  height: calc(100dvh - 56px);
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: $body-bg;
+  overflow: hidden;
+}
+
+#hero-canvas,
+.hero-content,
+.hero-scroll { grid-area: 1 / 1; }
+
+#hero-canvas {
+  opacity: 1;
+  z-index: 0;
+  pointer-events: none;
+  max-width: 100vw;
+  max-height: 100%;
+}
+
+.hero-content {
+  z-index: 10;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  max-width: 700px;
+}
+
+.hero-eyebrow {
+  font-family: $headings-font-family;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $primary;
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-family: $headings-font-family;
+  font-size: clamp(3.5rem, 12vw, 7.5rem);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  margin-bottom: 0;
+
+  .accent {
+    background: linear-gradient(135deg, $primary 0%, $secondary 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.hero-sub {
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  color: rgba(220, 220, 232, 0.75);
+  max-width: 480px;
+  margin: 1.4rem auto 0;
+  line-height: 1.65;
+
+  a {
+    color: $body-color;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba($primary, 0.4);
+    transition: color 0.15s, text-decoration-color 0.15s;
+    &:hover { color: $primary; text-decoration-color: $primary; }
+  }
+}
+
+.hero-scroll {
+  align-self: end;
+  justify-self: center;
+  padding-bottom: 2rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(220, 220, 232, 0.35);
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+
+  .scroll-line {
+    width: 1px;
+    height: 36px;
+    background: linear-gradient(to bottom, rgba($primary, 0.7), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 1; }
+}
+
+// ── Writing list ──────────────────────────────────────────────────────────────
+
+.posts-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.posts-label {
+  font-family: $headings-font-family;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $primary;
+  margin-bottom: 1.75rem;
+}
+
+.quarto-listing-table {
+  border-collapse: collapse;
+  width: 100%;
+
+  thead { display: none; }
+
+  tbody tr {
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.9rem 0;
+    background: none !important;
+    transition: opacity 0.15s;
+    &:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+    &:hover { opacity: 0.6; }
+  }
+
+  td { padding: 0; background: none !important; border: none; }
+
+  .listing-date {
+    flex-shrink: 0;
+    font-family: $headings-font-family;
+    font-size: 0.78rem;
+    color: rgba(220, 220, 232, 0.6);
+    font-variant-numeric: tabular-nums;
+    min-width: 6.5rem;
+  }
+
+  .listing-title, a.listing-title, a.title.listing-title {
+    font-family: $headings-font-family;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $body-color !important;
+    text-decoration: none !important;
+    letter-spacing: -0.01em;
+    &:hover { color: $primary !important; }
+  }
+}
+
+// ── Post title block ──────────────────────────────────────────────────────────
+
+#title-block-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  .quarto-title .title {
+    font-family: $headings-font-family;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .quarto-title-meta-heading {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(220, 220, 232, 0.6);
+  }
+
+  .quarto-title-meta-contents { color: rgba(220, 220, 232, 0.7); font-size: 0.9rem; }
+
+  .description {
+    font-size: 1.1rem;
+    color: rgba(220, 220, 232, 0.75);
+    margin-top: 0.75rem;
+    line-height: 1.65;
+  }
+}
+
+// ── Prose ─────────────────────────────────────────────────────────────────────
+
+article p  { line-height: 1.75; }
+
+article h2 {
+  font-family: $headings-font-family;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+}
+
+// ── Code ──────────────────────────────────────────────────────────────────────
+
+pre.sourceCode {
+  background: #12121f !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+p code, li code {
+  background: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+}
+
+blockquote {
+  border-left: 3px solid $primary;
+  padding-left: 1.25rem;
+  color: rgba(220, 220, 232, 0.75);
+  font-style: italic;
+}
+
+// ── DT::datatable ─────────────────────────────────────────────────────────────
+
+table.dataTable thead th,
+table.dataTable thead td {
+  background: #1a1a2e !important;
+  color: #dcdce8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+table.dataTable tbody tr { background: #13131e !important; color: #dcdce8 !important; }
+table.dataTable tbody tr.odd  { background: #13131e !important; }
+table.dataTable tbody tr.even { background: #0d0d14 !important; }
+table.dataTable tbody tr:hover td { background: rgba(255, 255, 255, 0.05) !important; }
+
+table.dataTable { border-color: rgba(255, 255, 255, 0.08) !important; }
+
+.dataTables_wrapper {
+  color: #dcdce8;
+
+  .dataTables_length label,
+  .dataTables_filter label { color: #dcdce8; }
+
+  .dataTables_length select,
+  .dataTables_filter input {
+    background: #1a1a2e;
+    color: #dcdce8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+  }
+
+  .dataTables_info { color: rgba(220, 220, 232, 0.5); }
+
+  .dataTables_paginate .paginate_button {
+    color: #dcdce8 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    &:hover { background: rgba(255, 255, 255, 0.08) !important; }
+    &.current, &.current:hover { background: rgba(124, 58, 237, 0.4) !important; color: #ffffff !important; }
+    &.disabled, &.disabled:hover { color: rgba(220, 220, 232, 0.25) !important; }
+  }
+}
+
+// ── Mobile ────────────────────────────────────────────────────────────────────
+
+@media (max-width: 600px) {
+  #hero-canvas { width: 320px !important; height: 320px !important; }
+  .quarto-listing-table tbody tr { flex-direction: column; gap: 0.2rem; }
+  .quarto-listing-table .listing-date { min-width: unset; }
+}

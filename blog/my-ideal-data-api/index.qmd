@@ -179,8 +179,8 @@ graph TD
     A --> C[Edition: GDP August]
     C --> H[Version: GDP August v1]
     A --> D[Edition: GDP September]
-    D --> E[Version: GDP September v1]
-    D --> F[Version: GDP September v2]
+    D --> E[Version: GDP Sept v1]
+    D --> F[Version: GDP Sept v2]
 ```
 
 This allows us the ability to differentiate between releases of new data which are on a scheduled and expected basis (e.g. when we update each month with new data), vs. when we need to make a correction to a dataset due to some unexpected error or revision.

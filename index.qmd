@@ -9,178 +9,146 @@ listing:
   filter-ui: false
   feed: true
   date-format: iso
-page-layout: article
+page-layout: full
 ---
 
-```{ojs}
-//| echo: false
-//| style: "text-align: center;"
+```{=html}
+<!-- zdog 3D hero canvas -->
+<section class="hero-section">
+  <canvas id="hero-canvas" width="500" height="500"></canvas>
 
-{
-  function binomialRandom(n, p) {
-    let x = 0;
-    for (let i = 0; i < n; i++) {
-      if (Math.random() < p) {
-        x++;
-      }
-    }
-    return x;
+  <div class="hero-content">
+    <p class="hero-eyebrow">Head of Analytics &middot; Companies House</p>
+    <h1 class="hero-title">
+      Ross<br><span class="accent">Bowen</span>
+    </h1>
+    <p class="hero-sub">
+      I like <a href="https://stat.columbia.edu/~gelman/book/">Bayesian statistics</a>,
+      <a href="http://www.stat.columbia.edu/~gelman/research/published/multi2.pdf">multilevel models</a>
+      and <a href="https://r4ds.hadley.nz/">R</a>. I think
+      <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4742505/pdf/13423_2015_Article_947.pdf">confidence intervals are overrated</a>
+      and <a href="https://www.ejwagenmakers.com/inpress/HoekstraEtAlPBR.pdf">misunderstood</a>.
+    </p>
+  </div>
+
+  <div class="hero-scroll">
+    <span>scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<script src="https://unpkg.com/zdog@1/dist/zdog.dist.min.js"></script>
+<script>
+(function () {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+
+  const TAU = Zdog.TAU;
+
+  // Palette
+  function adjustColor(hex, amt) {
+    const n = parseInt(hex.replace('#',''), 16);
+    return '#' + [n>>16, (n>>8)&0xff, n&0xff]
+      .map(c => Math.min(255,Math.max(0,c+amt)).toString(16).padStart(2,'0'))
+      .join('');
   }
 
-  function generateData(particles, places) {
-    const data = [];
+  const illo = new Zdog.Illustration({
+    element: canvas,
+    dragRotate: false,
+    zoom: 1.15,
+    rotate: { x: -0.2, y: 0.4 },
+  });
 
-    particles.forEach((value, index) => {
-      for (let y = 1; y <= value; y++) {
-        const colour = `hsl(${Math.floor(Math.random() * 360)}, 70%, 70%)`;
-        data.push({ x: index - Math.floor(places / 2), y: y, colour: colour });
-      }
+  // Central glowing sphere
+  new Zdog.Shape({ addTo:illo, stroke:32, color:'#a78bfa' });
+
+  // Icosahedron wireframe
+  const goldenRatio = (1 + Math.sqrt(5)) / 2;
+  const icoRaw = [
+    [-1,goldenRatio,0],[1,goldenRatio,0],[-1,-goldenRatio,0],[1,-goldenRatio,0],
+    [0,-1,goldenRatio],[0,1,goldenRatio],[0,-1,-goldenRatio],[0,1,-goldenRatio],
+    [goldenRatio,0,-1],[goldenRatio,0,1],[-goldenRatio,0,-1],[-goldenRatio,0,1],
+  ];
+  const S = 62;
+  const verts = icoRaw.map(([x,y,z]) => {
+    const l = Math.sqrt(x*x+y*y+z*z);
+    return { x:x/l*S, y:y/l*S, z:z/l*S };
+  });
+  [[0,1],[0,5],[0,7],[0,10],[0,11],[1,5],[1,7],[1,8],[1,9],
+   [2,3],[2,4],[2,10],[2,11],[3,4],[3,6],[3,8],[3,9],
+   [4,5],[4,9],[4,11],[5,9],[5,11],[6,7],[6,8],[6,10],
+   [7,8],[7,10],[8,9],[10,11]
+  ].forEach(([a,b]) =>
+    new Zdog.Shape({ addTo:illo,
+      path:[{...verts[a]},{...verts[b]}],
+      stroke:2, color:'rgba(124,58,237,0.6)' })
+  );
+
+  // Orbiting cubes
+  const orbitGroups = [
+    { r:105, phase:0,           size:16, color:'#ff4d6d' },
+    { r:105, phase:TAU/3,       size:16, color:'#7c3aed' },
+    { r:105, phase:2*TAU/3,     size:16, color:'#06b6d4' },
+    { r:155, phase:TAU/6,       size:11, color:'#10b981' },
+    { r:155, phase:TAU/6+TAU/2, size:11, color:'#f59e0b' },
+    { r:68,  phase:TAU/5,       size:9,  color:'#ec4899' },
+    { r:68,  phase:4*TAU/5,     size:9,  color:'#a78bfa' },
+  ].map(d => {
+    const g = new Zdog.Anchor({ addTo:illo, rotate:{ y:d.phase } });
+    new Zdog.Box({ addTo:g,
+      width:d.size, height:d.size, depth:d.size, stroke:false,
+      color:d.color,
+      leftFace:adjustColor(d.color,-25), rightFace:adjustColor(d.color,-25),
+      topFace:adjustColor(d.color,25),   bottomFace:adjustColor(d.color,-50),
+      translate:{ x:d.r },
     });
+    const spd = (0.004 + Math.random()*0.004) * (Math.random()<0.5?1:-1);
+    return { anchor:g, speed:spd };
+  });
 
-    return data;
-  }
-
-  function leap(data, places, maxParticles) {
-    const maxYs = data.reduce((acc, p) => {
-      if (!acc[p.x] || p.y > acc[p.x].y) {
-        acc[p.x] = p;
-      }
-      return acc;
-    }, {});
-
-    const topmostParticles = Object.values(maxYs);
-    const particleToModifyIndex = Math.floor(
-      Math.random() * topmostParticles.length
-    );
-    const particleToModify = topmostParticles[particleToModifyIndex];
-
-    const minX = Math.ceil(-(places + 1) / 2);
-    const maxX = Math.floor((places + 1) / 2);
-
-    let newX;
-    if (particleToModify.x === minX) {
-      newX = particleToModify.x + 1;
-    } else if (particleToModify.x === maxX) {
-      newX = particleToModify.x - 1;
-    } else {
-      newX = particleToModify.x + (Math.random() < 0.5 ? -1 : 1);
-      if (newX < minX) newX = minX;
-      if (newX > maxX) newX = maxX;
-    }
-
-    const maxYAtNewX =
-      Math.max(0, ...data.filter((p) => p.x === newX).map((p) => p.y)) + 1;
-    if (maxYAtNewX > maxParticles) {
-      return data;
-    }
-
-    data.forEach((p) => {
-      if (p === particleToModify) {
-        p.x = newX;
-        p.y = maxYAtNewX;
-      }
+  // Scattered dots
+  for (let i=0; i<28; i++) {
+    const theta = Math.random()*TAU;
+    const phi2  = Math.acos(2*Math.random()-1);
+    const r     = 110 + Math.random()*90;
+    const COLS  = ['#ff4d6d','#7c3aed','#06b6d4','#10b981','#f59e0b','#ec4899','#a78bfa'];
+    new Zdog.Shape({ addTo:illo,
+      stroke: 4 + Math.random()*5,
+      color: COLS[Math.floor(Math.random()*COLS.length)],
+      translate:{
+        x: r*Math.sin(phi2)*Math.cos(theta),
+        y: r*Math.sin(phi2)*Math.sin(theta),
+        z: r*Math.cos(phi2),
+      },
     });
-
-    return data;
   }
 
-  function createSvg(width, height, margin) {
-    return d3.create("svg").attr("viewBox", [0, 0, width, height]);
+  let tick = 0;
+  function animate() {
+    tick++;
+    illo.rotate.y += 0.004;
+    illo.rotate.x = -0.2 + Math.sin(tick*0.007)*0.09;
+    orbitGroups.forEach(({anchor,speed}) => {
+      anchor.rotate.y += speed;
+      anchor.rotate.x += speed*0.35;
+    });
+    illo.updateRenderGraph();
+    requestAnimationFrame(animate);
   }
+  animate();
+})();
 
-  function createScales(places, maxParticles, width, height, margin) {
-    const x = d3
-      .scaleLinear()
-      .domain([-(places + 1) / 2, (places + 1) / 2])
-      .range([margin.left, width - margin.right]);
+</script>
 
-    const y = d3
-      .scaleLinear()
-      .domain([0, maxParticles + 1])
-      .range([height - margin.bottom, margin.top]);
-
-    return { x, y };
-  }
-
-  function createXAxis(g, x, height, margin, places) {
-    g.attr("transform", `translate(0,${height - margin.bottom})`).call(
-      d3.axisBottom(x).ticks(places).tickSizeOuter(0)
-    );
-  }
-
-  function drawParticles(svg, data, x, y, radius) {
-    return svg
-      .append("g")
-      .selectAll("circle")
-      .data(data)
-      .join("circle")
-      .attr("cx", (d) => x(d.x))
-      .attr("cy", (d) => y(d.y))
-      .attr("r", radius)
-      .attr("fill", (d) => d.colour);
-  }
-
-  function animate(data, places, maxParticles, circles, x, y, duration) {
-    setInterval(() => {
-      const newData = leap(data, places, maxParticles);
-
-      circles = circles.data(newData).join(
-        (enter) =>
-          enter
-            .append("circle")
-            .attr("cx", (d) => x(d.x))
-            .attr("cy", (d) => y(d.y))
-            .attr("fill", (d) => d.colour)
-            .call((enter) => enter.transition().duration(duration)),
-        (update) =>
-          update.call((update) =>
-            update
-              .transition()
-              .duration(duration)
-              .attr("cx", (d) => x(d.x))
-              .attr("cy", (d) => y(d.y))
-              .attr("fill", (d) => d.colour)
-          ),
-        (exit) =>
-          exit.call((exit) => exit.transition().duration(duration).remove())
-      );
-    }, duration);
-  }
-
-  function main() {
-    const width = window.innerWidth < 768 ? 300 : 400;
-    const height = 100
-    const places = 10;
-    const maxParticles = 3;
-    const radius = height / 25;
-    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
-    const p = 0.4;
-    const duration = 500;
-
-    const particles = Array.from({ length: places + 1 }, () =>
-      binomialRandom(maxParticles, p)
-    );
-    const data = generateData(particles, places);
-
-    const svg = createSvg(width, height, margin);
-    const { x, y } = createScales(places, maxParticles, width, height, margin);
-    svg.append("g").call((g) => createXAxis(g, x, height, margin, places));
-
-    let circles = drawParticles(svg, data, x, y, radius);
-    animate(data, places, maxParticles, circles, x, y, duration);
-
-    return svg.node();
-  }
-
-  return main();
-}
+<!-- Blog posts section -->
+<div class="posts-wrap">
+  <p class="posts-label">Writing</p>
 ```
 
+::: {#listing}
+:::
 
-# Hello!
-
-I'm Ross. I'm Head of Analytics at Companies House 📈🏡📊.
-
-I like [Bayesian statistics](https://stat.columbia.edu/~gelman/book/), [multilevel models](http://www.stat.columbia.edu/~gelman/research/published/multi2.pdf) and [R](https://r4ds.hadley.nz/). I think [confidence intervals are overrated](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4742505/pdf/13423_2015_Article_947.pdf) and [misunderstood](https://www.ejwagenmakers.com/inpress/HoekstraEtAlPBR.pdf).
-
-Here's some of my recent stuff:
+```{=html}
+</div>
+```
